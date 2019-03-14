@@ -11,8 +11,6 @@ BLUE  = 'B'
 
 class HexBoard():
 
-
-
     def __init__(self, size=SIZE, start_config=True):
         self.size = size
         self.grid = defaultdict(lambda: BLANK)
@@ -50,9 +48,6 @@ class HexBoard():
     def is_val_move(curr_coord, new_coord):
         if  new_coord in neighbours(curr_coord) and grid[new_coord]:
             pass
-            
-        
-
 
     def move():
         pass
@@ -80,10 +75,6 @@ class HexBoard():
         if self.valid_coord((x-2,y,z+2)): yield (x-2,y,z+2)
         if self.valid_coord((x,y+2,z-2)): yield (x,y+2,z-2)
         if self.valid_coord((x,y-2,z+2)): yield (x,y-2,z+2)
-
-        
-        
-        
 
 
     def __repr__(self):
