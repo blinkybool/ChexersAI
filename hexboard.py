@@ -9,8 +9,10 @@ SIZE = 3
 class Tile(Enum):
     BLANK, RED, GREEN, BLUE = '0','R','G','B'
 
-
 class HexBoard():
+
+
+
     def __init__(self, size=SIZE, start_config=True):
         self.size = size
         self.grid = defaultdict(lambda: Tile.BLANK)
@@ -44,6 +46,16 @@ class HexBoard():
             self.grid[i,j,k] = Tile.GREEN
             self.grid[j,i,k] = Tile.RED
             self.grid[j,k,i] = Tile.BLUE
+
+    def is_val_move(curr_coord, new_coord):
+        if  new_coord in neighbours(curr_coord) and grid[new_coord]:
+            pass
+            
+        
+
+
+    def move():
+        pass
 
     def __repr__(self):
         # result = ''
