@@ -18,6 +18,8 @@ class HexBoard():
 
     def iter_coords(self):
         for x in range(-self.size, self.size+1):
+            # y = -x -z
+            # -x-size <= y <= -x + size
             low = max(- x - self.size, -self.size)
             hih = min(- x + self.size,  self.size)
             for y in range(low, hih+1):
@@ -35,7 +37,7 @@ class HexBoard():
 
     def reset_pieces(self):
         i = -self.size
-        for j in range(self.size+1):
+        for j in range(0,self.size+1):
             # i + j + k = 0
             k = - (i+j)
 
@@ -44,12 +46,12 @@ class HexBoard():
             self.grid[j,k,i] = Tile.BLUE
 
     def __repr__(self):
-        result = ''
+        # result = ''
         # for i, row in enumerate(self.iter_rows()):
         #     result += '\n' + ' '*abs(i-board.size) + ' '.join(str(tile) for tile in row)
         # return result
 
-        return '\n'.join(' '*abs(i-board.size) + ' '.join(str(tile) for tile in row) for i, row in enumerate(self.iter_rows()))
+        return '\n'.join(' '*abs(i-board.size) + ' '.join(str(tile.value) for tile in row) for i, row in enumerate(self.iter_rows()))
         
 
 if (__name__ == "__main__"):
