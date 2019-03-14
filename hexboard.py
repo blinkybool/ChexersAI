@@ -2,18 +2,18 @@ from enum import Enum
 import itertools
 from collections import defaultdict
 
-PRINT_COORDS = True
-
 SIZE = 3
 
-class Tile(Enum):
-    BLANK, RED, GREEN, BLUE = '0','R','G','B'
+BLANK = '0'
+RED   = 'R'
+GREEN = 'G'
+BLUE  = 'B'
 
 
 class HexBoard():
     def __init__(self, size=SIZE, start_config=True):
         self.size = size
-        self.grid = defaultdict(lambda: Tile.BLANK)
+        self.grid = defaultdict(lambda: BLANK)
         if start_config: self.reset_pieces()
 
     def iter_coords(self):
@@ -41,17 +41,40 @@ class HexBoard():
             # i + j + k = 0
             k = - (i+j)
 
-            self.grid[i,j,k] = Tile.GREEN
-            self.grid[j,i,k] = Tile.RED
-            self.grid[j,k,i] = Tile.BLUE
+            self.grid[i,j,k] = GREEN
+            self.grid[j,i,k] = RED
+            self.grid[j,k,i] = BLUE
+
+    def valid_coord(self, coord):
+        return -self.size <= min(coord) and max(coord) <= self.size and sum(coord)==0
+
+    def neighbours(self, coord):
+        x,y,z = coord
+
+        if self.valid_coord((x+1,y-1,z)): yield (x+1,y-1,z)
+        if self.valid_coord((x-1,y+1,z)): yield (x-1,y+1,z)
+        if self.valid_coord((x+1,y,z-1)): yield (x+1,y,z-1)
+        if self.valid_coord((x-1,y,z+1)): yield (x-1,y,z+1)
+        if self.valid_coord((x,y+1,z-1)): yield (x,y+1,z-1)
+        if self.valid_coord((x,y-1,z+1)): yield (x,y-1,z+1)
+
+    def jump_neighbours(self, coord):
+        x,y,z = coord
+
+        if self.valid_coord((x+2,y-2,z)): yield (x+2,y-2,z)
+        if self.valid_coord((x-2,y+2,z)): yield (x-2,y+2,z)
+        if self.valid_coord((x+2,y,z-2)): yield (x+2,y,z-2)
+        if self.valid_coord((x-2,y,z+2)): yield (x-2,y,z+2)
+        if self.valid_coord((x,y+2,z-2)): yield (x,y+2,z-2)
+        if self.valid_coord((x,y-2,z+2)): yield (x,y-2,z+2)
+
+        
+        
+        
+
 
     def __repr__(self):
-        # result = ''
-        # for i, row in enumerate(self.iter_rows()):
-        #     result += '\n' + ' '*abs(i-board.size) + ' '.join(str(tile) for tile in row)
-        # return result
-
-        return '\n'.join(' '*abs(i-board.size) + ' '.join(str(tile.value) for tile in row) for i, row in enumerate(self.iter_rows()))
+        return '\n'.join(' '*abs(i-board.size) + ' '.join(str(tile) for tile in row) for i, row in enumerate(self.iter_rows()))
         
 
 if (__name__ == "__main__"):
