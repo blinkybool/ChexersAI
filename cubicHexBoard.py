@@ -18,8 +18,11 @@ class Tile(Enum):
     def __str__(self):
         return self.__repr__()
 
+def coord_add(coord1, coord2):
+    return tuple(sum(i,j) for i,j in zip(coord1, coord2))
 
-class HexBoard():
+
+class CubicHexBoard():
 
     def __init__(self, size=SIZE, start_config=True):
         self.size = size
@@ -37,13 +40,13 @@ class HexBoard():
             self.grid[j,k,i] = Tile.BLUE
     
     def iter_coords(self):
-        for x in range(-self.size, self.size+1):
-            # y = -x -z
-            # -x-size <= y <= -x + size
-            low = max(- x - self.size, -self.size)
-            hih = min(- x + self.size,  self.size)
-            for y in range(low, hih+1):
-                yield (x,y,-x-y)
+        for z in range(-self.size, self.size+1):
+            # x = -y -z
+            # -y-size <= x <= -y + size
+            low = max(- z - self.size, -self.size)
+            hih = min(- z + self.size,  self.size)
+            for x in range(low, hih+1):
+                yield (x,-x-z,z)
     
     def is_valid_coord(self, coord):
         return -self.size  <= min(coord) and \
@@ -57,10 +60,10 @@ class HexBoard():
             yield self.grid[coord]
 
     def iter_rows(self):
-        for x in range(-self.size, self.size+1):
-            low = max(- x - self.size, -self.size)
-            hih = min(- x + self.size,  self.size)
-            yield (self.grid[x,y,-x-y] for y in range(low, hih+1))
+        for z in range(-self.size, self.size+1):
+            low = max(- z - self.size, -self.size)
+            hih = min(- z + self.size,  self.size)
+            yield (self.grid[x,-x-z,z] for x in range(low, hih+1))
 
     def neighbours(self, coord):
         x,y,z = coord
@@ -167,16 +170,16 @@ class HexBoard():
             assert(0)
 
     def jump(self, coord, axes, dir):
-        assert(abs(dir)==2)
+        assert(abs(dir)==1)
 
         x,y,z = coord
 
         if axes == 'x':
-            new_coord = (x, y+dir, z-dir)
+            new_coord = (x, y+2*dir, z-2*dir)
         elif axes == 'y':
-            new_coord = (x+dir, y, z-dir)
+            new_coord = (x+2*dir, y, z-2*dir)
         elif axes == 'z':
-            new_coord = (x+dir, y-dir, z)
+            new_coord = (x+2*dir, y-2*dir, z)
         else:
             assert(0)
 
@@ -198,7 +201,7 @@ class HexBoard():
         return self.__repr__()
 
 if __name__ == "__main__":
-    board = HexBoard()
-    print(board.grid[-3,1,2])
-    board.move((-3,1,2), 'z', -1)
+    board = CubicHexBoard()
+    # print(board.grid[-3,1,2])
+    # board.move((-3,1,2), 'z', -1)
     print(board)
