@@ -76,7 +76,15 @@ class Node():
         for newstate, move in hb.new_states(self.state):
             yield Node(newstate, self, move, self.cost+1, newstate.get_heu(hb))
 
-    def path(self):
+    @classmethod
+    def print_path(cls, node):
+        if node.parent is not None:
+            cls.print_path(node.parent)
+        print(node.prevmove)
+    
+'''
+
+
         curr_node = self
         move_list = []
         while curr_node.parent is not None:
@@ -84,7 +92,9 @@ class Node():
             curr_node = curr_node.parent
         
         while move_list:
-            print(move_list.pop())
+            print(move_list.pop())'''
+
+
 
 
 def main():
@@ -105,7 +115,7 @@ def main():
                 queue.push(node)
                 board.seen_states.add(node.state.pieces)
 
-    bestnode.path()
+    Node.print_path(bestnode)
                
 
 
