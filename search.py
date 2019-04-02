@@ -18,15 +18,95 @@ Hello {markerName}, my name is Kanye's fingers, and I'm here to use my fingers t
 import sys
 import json
 from math import ceil
+from hexboard import Tile, Colour, PieceState, HexBoard
+from heapq import *
 
+class PriorityQueue():
+    
+    def __init__(self):
+        self.queue = []
+    
+    def push(self, node):
+        heappush(self.queue, node)
+    
+    def pop(self):
+        return heappop(self.queue)
+
+    def __bool__(self):
+        return bool(self.queue)
+
+
+
+class Node():
+    def __init__(self, state, parent, prevmove, cost, heu):
+        self.state = state
+        self.parent = parent
+        self.cost = cost
+        self.heu = heu
+        self.prevmove = prevmove
+
+    def isgoal(self):
+        return not self.state
+    
+
+    # defines how a node should be prioritised for a priority queue.
+    # since we are using A*, nodes are ordered based on cost + heuristic
+    def __eq__(self, other):
+        return (self.cost + self.heu) == (other.cost + other.heu)
+
+    def __ne__(self, other):
+        return (self.cost + self.heu) != (other.cost + other.heu)
+
+    def __lt__(self, other):
+        return (self.cost + self.heu) < (other.cost + other.heu)
+
+    def __le__(self, other):
+        return (self.cost + self.heu) <= (other.cost + other.heu)
+
+    def __gt__(self, other):
+        return (self.cost + self.heu) > (other.cost + other.heu)
+
+    def __ge__(self, other):
+        return (self.cost + self.heu) >= (other.cost + other.heu)
+
+    def __repr__(self):
+        return f"cost:{self.cost} heu:{self.heu} state:{self.state}" 
+
+    def expand(self, hb):
+        for newstate, move in hb.new_states(self.state):
+            yield Node(newstate, self, move, self.cost+1, newstate.get_heu(hb))
+
+    def path(self):
+        curr_node = self
+        move_list = []
+        while curr_node.parent is not None:
+            move_list.append(curr_node.prevmove)
+            curr_node = curr_node.parent
+        
+        while move_list:
+            print(move_list.pop())
 
 
 def main():
-    with open(sys.argv[1]) as file:
-        data = json.load(file)
+    print("thing")
+    board = HexBoard(start_config_file="test.json")
+    queue = PriorityQueue()
+    bestnode = None
+    queue.push(Node(state=board.start_state, parent=None, prevmove="", cost=0, heu=board.start_state.get_heu(board)))
+    while queue:
+        nextnode = queue.pop()
+        if bestnode and nextnode >= bestnode:     # pretty sure this is the break condition (even though the first one we find should be best)
+            break 
+        if nextnode.isgoal():
+            bestnode = nextnode
+            continue
+        for node in nextnode.expand(board):
+            if node.state.pieces not in board.seen_states:
+                queue.push(node)
+                board.seen_states.add(node.state.pieces)
 
-    # TODO: Search for and output winning sequence of moves
-    # ...
+    bestnode.path()
+               
 
 
 # when this module is executed, run the `main` function:
