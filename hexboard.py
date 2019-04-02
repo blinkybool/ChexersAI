@@ -180,22 +180,6 @@ class HexBoard():
                 move = f"EXIT from {new_pieces.pop(i)}."
                 yield (PieceState(tuple(new_pieces)), move)
 
-    def jump_neighbours(self, coord):
-        x, y, z = coord
-
-        if self.is_valid_coord((x+2, y-2)):
-            yield (x+2, y-2)
-        if self.is_valid_coord((x-2, y+2)):
-            yield (x-2, y+2)
-        if self.is_valid_coord((x+2, y)):
-            yield (x+2, y)
-        if self.is_valid_coord((x-2, y)):
-            yield (x-2, y)
-        if self.is_valid_coord((x, y+2)):
-            yield (x, y+2)
-        if self.is_valid_coord((x, y-2)):
-            yield (x, y-2)
-
     def format_with_state(self, piecestate=None, debug=False):
         """
         Helper function to print a drawing of a hexagonal board's contents.

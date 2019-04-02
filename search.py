@@ -19,7 +19,7 @@ import sys
 import json
 from math import ceil
 from hexboard import Tile, Colour, PieceState, HexBoard
-from heapq import *
+from heapq import heappush, heappop
 
 class PriorityQueue():
     
@@ -76,11 +76,20 @@ class Node():
         for newstate, move in hb.new_states(self.state):
             yield Node(newstate, self, move, self.cost+1, newstate.get_heu(hb))
 
-    @classmethod
-    def print_path(cls, node):
-        if node.parent is not None:
-            cls.print_path(node.parent)
-        print(node.prevmove)
+    def get_state_path(self):
+        if self.parent is not None:
+            return self.parent.get_state_path().append(self.state)
+        return [self.state]
+
+    def print_path(self):
+        if self.parent is not None:
+            self.parent.print_path()
+            print(self.prevmove)
+
+    def print_path_boards(self,board):
+        if self.parent is not None:
+            self.parent.print_path_boards(board)
+        print(board.format_with_state(self.state))
     
 '''
 
@@ -98,7 +107,6 @@ class Node():
 
 
 def main():
-    print("thing")
     board = HexBoard(start_config_file="test.json")
     queue = PriorityQueue()
     bestnode = None
@@ -115,7 +123,8 @@ def main():
                 queue.push(node)
                 board.seen_states.add(node.state.pieces)
 
-    Node.print_path(bestnode)
+    # bestnode.print_path()
+    bestnode.print_path_boards(board)
                
 
 
