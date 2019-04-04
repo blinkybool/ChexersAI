@@ -4,6 +4,9 @@ preNode = namedtuple("preNode", ['state', 'cost', 'heu', 'parent', 'prevmove'])
 
 class Node(preNode):
 
+    def __hash__(self):
+        return hash((self.cost, self.heu, self.parent, self.prevmove))
+
     def isgoal(self):
         return not bool(self.state)
     

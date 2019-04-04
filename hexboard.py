@@ -41,8 +41,8 @@ class PieceState():
     def __init__(self, pieces=tuple()):
         self.pieces = tuple(sorted(pieces))
 
-    # def __hash__(self):
-    #     self.pieces.__hash__()
+    def __hash__(self):
+        self.pieces.__hash__()
 
     def __getitem__(self, key):
         return self.pieces.__getitem__(key)

@@ -10,10 +10,13 @@ class Heap():
         return self.heap.__len__()
     
     def __bool__(self):
-        return self.heap.__bool__()
+        return len(self.heap) != 0
 
     def __contains__(self, item):
         return self.heapmap.__contains__(item)
+    
+    def index(self, item):
+        return self.heapmap[item]
 
     def __getitem__(self, key):
         return self.heap.__getitem__(key)
@@ -27,6 +30,14 @@ class Heap():
     
     def update_key_smaller(self, item):
         self.__siftup  (0, self.heapmap[item])
+
+    def replace(self, item, newitem):
+        pos = self.heapmap.pop(item)
+        self[pos] = newitem
+        if item < newitem:
+            self.__siftdown(0,pos)
+        elif newitem > item:
+            self.__siftup(pos)
     
     def push(self, item):
         if item in self:

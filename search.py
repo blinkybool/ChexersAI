@@ -22,6 +22,7 @@ from hexboard import Tile, Colour, PieceState, HexBoard
 from heapq import heappush, heappop
 from node import Node
 import parseBoard
+from heapy import Heap
 
 class PriorityQueue():
     
@@ -41,23 +42,26 @@ class PriorityQueue():
 
 
 def main():
-    board = HexBoard(start_config_file=parseBoard.testname)
+    board = HexBoard(start_config_file="cooltest.json")
     queue = Heap()
     bestnode = None
     # board.seen_states.add(board.start_state.pieces)
     queue.push(Node(state=board.start_state, parent=None, prevmove="", cost=0, heu=board.start_state.get_heu(board)))
     while queue:
         nextnode = queue.pop()
-        if bestnode and nextnode >= bestnode:     # pretty sure this is the break condition (even though the first one we find should be best)
+        if bestnode is not None and nextnode >= bestnode:     # pretty sure this is the break condition (even though the first one we find should be best)
             break 
         if nextnode.isgoal():
             bestnode = nextnode
             continue
         for node in nextnode.expand(board):
             if node.state.pieces in board.seen_states:
-                pass###############################################################################################fix this first
+                old_node = board.seen_states[node.state.pieces]
+                if node < old_node:
+                    queue.replace(old_node, node)
+                    board.seen_states[node.state.pieces] = node
             else:
-                board.seen_states[nextnode.state.pieces] = 
+                board.seen_states[node.state.pieces] = node
                 queue.push(node)
 
     # bestnode.print_path()
