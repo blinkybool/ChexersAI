@@ -49,7 +49,7 @@ def main():
     queue.push(Node(state=board.start_state, parent=None, prevmove="", cost=0, heu=board.start_state.get_heu(board)))
     while queue:
         nextnode = queue.pop()
-        if bestnode is not None and nextnode >= bestnode:     # pretty sure this is the break condition (even though the first one we find should be best)
+        if (bestnode is not None) and (nextnode >= bestnode):     # pretty sure this is the break condition (even though the first one we find should be best)
             break 
         if nextnode.isgoal():
             bestnode = nextnode

@@ -33,7 +33,7 @@ for i in range(len(inputStr)):
 
 
 
-testname = "cooltest.json"
+testname = "cooltest1.json"
 
 with open(testname, 'w') as fp:
     json.dump(jthing, fp)
