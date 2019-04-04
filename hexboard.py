@@ -135,7 +135,7 @@ class HexBoard():
         if self.player==Colour.GREEN:
             return y==RADIUS
         if self.player==Colour.BLUE:
-            return sum(x, y)==-RADIUS
+            return x+y==-RADIUS
         else:
             print("aaaaaaaaaaaahhhh")
             exit()
