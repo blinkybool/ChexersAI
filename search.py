@@ -43,7 +43,7 @@ class PriorityQueue():
 
 
 def main():
-    board = HexBoard(start_config_file="cooltest.json")
+    board = HexBoard(start_config_file=parseBoard.testname)
     queue = Heap()
     bestnode = None
     # board.seen_states.add(board.start_state.pieces)

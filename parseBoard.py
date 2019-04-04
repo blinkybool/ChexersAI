@@ -11,12 +11,12 @@ coordmap =[ [ 0,-3],[ 1,-3],[ 2,-3],[ 3,-3],
 
 inputStr = '''
     - - - -
-   X - - X X 
-  X X X X X -   
- - X - - X X X
-  - X x - X X   
-   x X X - X 
-    R - - X
+   - - - - - 
+  - - - - - -   
+ - - - - - - -
+  - - - - - -   
+   - - - - - 
+    R R R R
 '''[1:-1].replace(" ",'').replace("\n",'')
 
 
@@ -40,3 +40,15 @@ with open(testname, 'w') as fp:
 
 if __name__ == "__main__":
     search.main()
+
+
+'''Graveyard'''
+'''
+    - - - -
+   X - - X X 
+  X X X X X -   
+ - X - - X X X
+  - X x - X X   
+   x X X - X 
+    R - - X
+'''
