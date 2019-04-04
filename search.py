@@ -25,9 +25,11 @@ class PriorityQueue():
     
     def __init__(self):
         self.queue = []
+        self.find = dict()
     
     def push(self, node):
         heappush(self.queue, node)
+
     
     def pop(self):
         return heappop(self.queue)
@@ -38,6 +40,7 @@ class PriorityQueue():
 
 
 class Node():
+    
     def __init__(self, state, parent, prevmove, cost, heu):
         self.state = state
         self.parent = parent
@@ -114,7 +117,6 @@ def main():
     queue.push(Node(state=board.start_state, parent=None, prevmove="", cost=0, heu=board.start_state.get_heu(board)))
     while queue:
         nextnode = queue.pop()
-        board.seen_states.add(nextnode.state.pieces)
         if bestnode and nextnode >= bestnode:     # pretty sure this is the break condition (even though the first one we find should be best)
             break 
         if nextnode.isgoal():
@@ -123,6 +125,7 @@ def main():
         for node in nextnode.expand(board):
             if node.state.pieces not in board.seen_states:
                 queue.push(node)
+                board.seen_states.add(node.state.pieces)
 
     # bestnode.print_path()
     bestnode.print_path_boards(board)
