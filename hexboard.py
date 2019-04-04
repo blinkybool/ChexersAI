@@ -73,7 +73,7 @@ class HexBoard():
     def __init__(self, start_config_file='', radius=RADIUS):
         self.radius = radius
         self.tiles = dict()
-        self.seen_states = set()
+        self.seen_states = dict()
         self.start_state = PieceState()
 
         # extract data from json

@@ -42,9 +42,9 @@ class PriorityQueue():
 
 def main():
     board = HexBoard(start_config_file=parseBoard.testname)
-    queue = PriorityQueue()
+    queue = Heap()
     bestnode = None
-    board.seen_states.add(board.start_state.pieces)
+    # board.seen_states.add(board.start_state.pieces)
     queue.push(Node(state=board.start_state, parent=None, prevmove="", cost=0, heu=board.start_state.get_heu(board)))
     while queue:
         nextnode = queue.pop()
@@ -54,9 +54,11 @@ def main():
             bestnode = nextnode
             continue
         for node in nextnode.expand(board):
-            if node.state.pieces not in board.seen_states:
+            if node.state.pieces in board.seen_states:
+                pass###############################################################################################fix this first
+            else:
+                board.seen_states[nextnode.state.pieces] = 
                 queue.push(node)
-                board.seen_states.add(node.state.pieces)
 
     # bestnode.print_path()
     bestnode.print_path_boards(board)

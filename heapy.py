@@ -2,61 +2,101 @@
 
 class Heap():
     
-    def __init__(self, heap_list=[]):
-        self.heap = heap_list
-        self.finder = {heap[i]: i for i in range(heap)}
+    def __init__(self):
+        self.heap = []
+        self.heapmap = {self[i]: i for i in range(len(self))}
     
-    def __contains__(self, item):
-        return self.finder.__contains__(item)
+    def __len__(self):
+        return self.heap.__len__()
+    
+    def __bool__(self):
+        return self.heap.__bool__()
 
-    def __index(self, item):
-        return self.finder[item]
+    def __contains__(self, item):
+        return self.heapmap.__contains__(item)
+
+    def __getitem__(self, key):
+        return self.heap.__getitem__(key)
+
+    def __setitem__(self, key, item):
+        self.heap[key] = item
+        self.heapmap[item] = key
 
     def update_key_bigger(self, item):
-        pos = self.__siftdown(0, self.__index(item))
-        self.finder[item] = pos
+        self.__siftdown(0, self.heapmap[item])
     
     def update_key_smaller(self, item):
-        pos = self.__siftup(0, self.__index(item))
-        self.finder[item] = pos
+        self.__siftup  (0, self.heapmap[item])
     
     def push(self, item):
+        if item in self:
+            print("ah fuck don't do that")
+            exit()
+        
         self.heap.append(item)
-        pos = self.__siftdown(0, len(heap)-1)
+        lastpos = len(self) - 1
+        self.heapmap[item] = lastpos
+        self.__siftdown(0, lastpos)
+
+    def pop(self):
+        """Pop the smallest item off the heap, maintaining the heap invariant."""
+        lastelt = self.heap.pop()    # raises appropriate IndexError if heap is empty
+        del self.heapmap[lastelt]
+        if self.heap:
+            returnitem = self[0]
+            del self.heapmap[returnitem]
+            self[0] = lastelt
+            self.__siftup(0)
+            return returnitem
+            
+        return lastelt
 
     def __siftdown(self, startpos, pos):
-        newitem = self.heap[pos]
+        newitem = self[pos]
         # Follow the path to the root, moving parents down until finding a place
         # newitem fits.
         while pos > startpos:
             parentpos = (pos - 1) >> 1
-            parent = self.heap[parentpos]
+            parent = self[parentpos]
             if newitem < parent:
-                self.heap[pos] = parent
+                self[pos] = parent
                 pos = parentpos
                 continue
             break
-        self.heap[pos] = newitem
-        return pos
+        self[pos] = newitem
 
     def __siftup(self, pos):
-        endpos = len(heap)
+        endpos = len(self)
         startpos = pos
-        newitem = self.heap[pos]
+        newitem = self[pos]
         # Bubble up the smaller child until hitting a leaf.
         childpos = 2*pos + 1    # leftmost child position
         while childpos < endpos:
             # Set childpos to index of smaller child.
             rightpos = childpos + 1
-            if rightpos < endpos and not self.heap[childpos] < self.heap[rightpos]:
+            if rightpos < endpos and not self[childpos] < self[rightpos]:
                 childpos = rightpos
             # Move the smaller child up.
-            self.heap[pos] = self.heap[childpos]
+            self[pos] = self[childpos]
             pos = childpos
             childpos = 2*pos + 1
         # The leaf at pos is empty now.  Put newitem there, and bubble it up
         # to its final resting place (by sifting its parents down).
-        self.heap[pos] = newitem
+        self[pos] = newitem
         self.__siftdown(startpos, pos)
 
+if __name__ == "__main__":
+    myheap = Heap()
+    myheap.push(8)
+    myheap.push(5)
+    myheap.push(3)
+    myheap.push(10)
+    myheap.push(6)
+    myheap.push(2)
 
+    print(myheap.heap)
+    print(myheap.heapmap)
+    print(myheap.pop())
+
+    print(myheap.heap)
+    print(sorted(myheap.heapmap.items(), key=lambda x: x[::-1]))
