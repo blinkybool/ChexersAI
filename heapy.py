@@ -59,4 +59,4 @@ class Heap():
         self.heap[pos] = newitem
         self.__siftdown(startpos, pos)
 
-        
+

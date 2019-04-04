@@ -110,7 +110,7 @@ class HexBoard():
         VERSION 1: number of jumps from end tiles (H = ceiling(D/2))
         '''
 
-        return self.goal_jump_dist(coord)
+        return self.goal_jump_dist(coord)+1
         # return 0
 
     def goal_jump_dist(self, coord):
@@ -172,12 +172,13 @@ class HexBoard():
         '''
         for i, piece in enumerate(state):
             for action in self.move_choices(piece, state):
-                new_pieces = list(state.pieces)
+                new_pieces = list(state.pieces).copy()
                 move = f"{action[1]} from {piece} to {action[0]}."
                 new_pieces[i] = action[0]
                 yield (PieceState(tuple(new_pieces)), move)
 
             if self.can_exit(piece):
+                new_pieces = list(state.pieces).copy()
                 move = f"EXIT from {new_pieces.pop(i)}."
                 yield (PieceState(tuple(new_pieces)), move)
 

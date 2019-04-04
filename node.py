@@ -2,7 +2,7 @@ from collections import namedtuple
 
 preNode = namedtuple("preNode", ['state', 'cost', 'heu', 'parent', 'prevmove'])
 
-class BillyNode(preNode):
+class Node(preNode):
 
     def isgoal(self):
         return not bool(self.state)
@@ -29,7 +29,7 @@ class BillyNode(preNode):
 
     def expand(self, board):
         for newstate, movestring in board.new_states(self.state):
-            yield BillyNode(newstate, self.cost+1, newstate.get_heu(board), self, movestring)
+            yield Node(newstate, self.cost+1, newstate.get_heu(board), self, movestring)
 
     def get_state_path(self):
         if self.parent is not None:
