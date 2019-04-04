@@ -20,6 +20,7 @@ import json
 from math import ceil
 from hexboard import Tile, Colour, PieceState, HexBoard
 from heapq import heappush, heappop
+from node import BillyNode
 
 class PriorityQueue():
     
@@ -106,15 +107,12 @@ class Node():
         while move_list:
             print(move_list.pop())'''
 
-
-
-
 def main():
-    board = HexBoard(start_config_file=sys.argv[1])
+    board = HexBoard(start_config_file="test.json")
     queue = PriorityQueue()
     bestnode = None
     board.seen_states.add(board.start_state.pieces)
-    queue.push(Node(state=board.start_state, parent=None, prevmove="", cost=0, heu=board.start_state.get_heu(board)))
+    queue.push(BillyNode(state=board.start_state, parent=None, prevmove="", cost=0, heu=board.start_state.get_heu(board)))
     while queue:
         nextnode = queue.pop()
         if bestnode and nextnode >= bestnode:     # pretty sure this is the break condition (even though the first one we find should be best)
