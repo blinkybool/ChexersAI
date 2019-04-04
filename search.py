@@ -89,7 +89,7 @@ class Node():
     def print_path_boards(self,board):
         if self.parent is not None:
             self.parent.print_path_boards(board)
-        print(board.format_with_state(self.state))
+        print(board.format_with_state(self.state, message=f"c={self.cost} + h={self.heu} == {self.cost+self.heu}"))
     
 '''
 
@@ -107,12 +107,14 @@ class Node():
 
 
 def main():
-    board = HexBoard(start_config_file="test.json")
+    board = HexBoard(start_config_file=sys.argv[1])
     queue = PriorityQueue()
     bestnode = None
+    board.seen_states.add(board.start_state.pieces)
     queue.push(Node(state=board.start_state, parent=None, prevmove="", cost=0, heu=board.start_state.get_heu(board)))
     while queue:
         nextnode = queue.pop()
+        board.seen_states.add(nextnode.state.pieces)
         if bestnode and nextnode >= bestnode:     # pretty sure this is the break condition (even though the first one we find should be best)
             break 
         if nextnode.isgoal():
@@ -121,7 +123,6 @@ def main():
         for node in nextnode.expand(board):
             if node.state.pieces not in board.seen_states:
                 queue.push(node)
-                board.seen_states.add(node.state.pieces)
 
     # bestnode.print_path()
     bestnode.print_path_boards(board)

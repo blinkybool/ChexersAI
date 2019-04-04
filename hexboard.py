@@ -111,6 +111,7 @@ class HexBoard():
         '''
 
         return self.goal_jump_dist(coord)
+        # return 0
 
     def goal_jump_dist(self, coord):
         '''
@@ -180,7 +181,7 @@ class HexBoard():
                 move = f"EXIT from {new_pieces.pop(i)}."
                 yield (PieceState(tuple(new_pieces)), move)
 
-    def format_with_state(self, piecestate=None, debug=False):
+    def format_with_state(self, piecestate=None, debug=False, message=''):
         """
         Helper function to print a drawing of a hexagonal board's contents.
 
@@ -250,6 +251,7 @@ class HexBoard():
 #             | -3, 3 | -2, 3 | -1, 3 |  0, 3 |   |  q, r |
 #              `-._,-' `-._,-' `-._,-' `-._,-'     `-._,-'"""
 
+
         # prepare the provided board contents as strings, formatted to size.
         ran = range(-3, +3+1)
         cells = []
@@ -263,7 +265,7 @@ class HexBoard():
             cells.append(str(cell).center(5))
 
         # fill in the template to create the board drawing, then print!
-        return template.format("", *cells)
+        return template.format(message, *cells)
 
     def print_path(self, piecestates):
         for state in piecestates:
