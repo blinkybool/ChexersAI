@@ -1,4 +1,4 @@
-
+import sys
 
 class Heap():
     
@@ -10,40 +10,32 @@ class Heap():
         return self.heap.__len__()
     
     def __bool__(self):
-        return len(self.heap) != 0
+        return self.__len__() != 0
 
     def __contains__(self, item):
         return self.heapmap.__contains__(item)
-    
-    def index(self, item):
-        return self.heapmap[item]
 
     def __getitem__(self, key):
         return self.heap.__getitem__(key)
 
     def __setitem__(self, key, item):
+        # key: position in heap
+        # item: item in heap (and key of heapmap)
         self.heap[key] = item
         self.heapmap[item] = key
-
-    def update_key_bigger(self, item):
-        self.__siftdown(0, self.heapmap[item])
-    
-    def update_key_smaller(self, item):
-        self.__siftup  (0, self.heapmap[item])
 
     def replace(self, item, newitem):
         pos = self.heapmap.pop(item)
         self[pos] = newitem
-        if item < newitem:
-            self.__siftdown(0,pos)
+        if newitem < item:
+            self.__siftdown(0, pos)
         elif newitem > item:
             self.__siftup(pos)
     
     def push(self, item):
-        # if item in self:
-        #     if item in self:
-        #         print("ah fuck don't do that")
-        #         exit()
+        if item in self.heapmap:
+            print("tried to push equal node to heap", file=sys.stderr)
+            exit()
         
         self.heap.append(item)
         lastpos = len(self) - 1

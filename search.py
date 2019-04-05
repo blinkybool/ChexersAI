@@ -58,6 +58,7 @@ def kanyeplspushthepieces(board):
 
 def main():
 
+    # find board config file
     if len(sys.argv)==1:
         board_config = parseboard()
     elif len(sys.argv)==2:

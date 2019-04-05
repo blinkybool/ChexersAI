@@ -1,26 +1,14 @@
-import json
-
+import json, sys
 '''
 Generate test case boards
 '''
-# Pick player - (use same letter for board design)
 
+BOARD_INPUT_FILENAME = "boardinput.txt"
+
+# Pick player - (use same letter for board design)
 PLAYER = 'red'
 # PLAYER = 'green'
 # PLAYER = 'blue'
-
-# Design the board
-
-board = \
-'''
-    - - - -
-   - - - - - 
-  - - - - - -   
- - - - - - - -
-  - - - - - -   
-   - - - - - 
-    R R R R
-'''
 
 ########################################################
 
@@ -41,24 +29,20 @@ def parseboard():
     
     template = {'colour': PLAYER, 'pieces': [], 'blocks': []}
 
-    for tile, coord in zip(board.split(),boardcoords):
-        if tile in PLAYER_TILES:
-            template["pieces"].append(coord)
-        elif tile in BLOCK_TILES:
-            template["blocks"].append(coord)
-        elif tile != EMPTY_TILE:
-            print("bad parse")
+    with open(BOARD_INPUT_FILENAME) as board:
+        for tile, coord in zip(board.read().split(), boardcoords):
+            if tile in PLAYER_TILES:
+                template["pieces"].append(coord)
+            elif tile in BLOCK_TILES:
+                template["blocks"].append(coord)
+            elif tile != EMPTY_TILE:
+                print("bad parse", file=sys.stderr)
 
     return template
 
+if __name__ == "__main__":
+    assert len(sys.argv)==2 and "Need 1 argument (file name for output)"
 
-'''Graveyard'''
-'''
-    - - - -
-   X - - X X 
-  X X X X X -   
- - X - - X X X
-  - X x - X X   
-   x X X - X 
-    R - - X
-'''
+    # Dump the board config into a json file
+    with open(sys.argv[1], 'w') as fp:
+        json.dump(parseboard(), fp)

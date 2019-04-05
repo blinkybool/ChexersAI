@@ -1,9 +1,7 @@
-import json
 from enum import Enum, unique
 from math import ceil
 
 RADIUS = 3
-
 
 @unique
 class Colour(Enum):
@@ -184,23 +182,6 @@ class HexBoard():
     def format_with_state(self, piecestate=None, debug=False, message=''):
         """
         Helper function to print a drawing of a hexagonal board's contents.
-
-        Arguments:
-
-        * `board_dict` -- dictionary with tuples for keys and anything printable
-        for values. The tuple keys are interpreted as hexagonal coordinates (using 
-        the axial coordinate system outlined in the project specification) and the 
-        values are formatted as strings and placed in the drawing at the corres- 
-        ponding location (only the first 5 characters of each string are used, to 
-        keep the drawings small). Coordinates with missing values are left blank.
-
-        Keyword arguments:
-
-        * `message` -- an optional message to include on the first line of the 
-        drawing (above the board) -- default `""` (resulting in a blank message).
-        * `debug` -- for a larger board drawing that includes the coordinates 
-        inside each hex, set this to `True` -- default `False`.
-        * Or, any other keyword arguments! They will be forwarded to `print()`.
         """
 
         if piecestate == None:
