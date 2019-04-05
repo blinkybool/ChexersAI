@@ -40,9 +40,10 @@ class Heap():
             self.__siftup(pos)
     
     def push(self, item):
-        if item in self:
-            print("ah fuck don't do that")
-            exit()
+        # if item in self:
+        #     if item in self:
+        #         print("ah fuck don't do that")
+        #         exit()
         
         self.heap.append(item)
         lastpos = len(self) - 1

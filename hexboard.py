@@ -67,29 +67,28 @@ class PieceState():
 Board state from the perspective of one player
 '''
 
+DEFAULT_PLAYER = 'red'
+
 
 class HexBoard():
 
-    def __init__(self, start_config_file='', radius=RADIUS):
+    def __init__(self, config, radius=RADIUS):
         self.radius = radius
-        self.tiles = dict()
-        self.seen_states = dict()
+        self.tiles = {}
+        self.seen_states = {}
         self.start_state = PieceState()
 
-        # extract data from json
-        with open(start_config_file) as start_config_json:
-            start_config = json.load(start_config_json)
-            self.player = Colour.parse(start_config["colour"])
-            self.start_state = PieceState(tuple(map(tuple, start_config["pieces"])))
-            self.blocks = tuple(map(tuple, start_config["blocks"]))
+        self.player = Colour.parse(config["colour"])
+        self.start_state = PieceState(tuple(map(tuple, config["pieces"])))
+        # self.blocks = tuple(map(tuple, config["blocks"]))
 
         # initialise all blank tiles
         for coord in self.iter_coords():
             self[coord] = Tile(Colour.BLANK, self.goal_jump_dist(coord))
 
         # set all the block positions
-        for coord in self.blocks:
-            self[coord].colour = Colour.BLOCK
+        for coord in config["blocks"]:
+            self[tuple(coord)].colour = Colour.BLOCK
 
     def __getitem__(self, key):
         return self.tiles.__getitem__(key)
@@ -256,11 +255,10 @@ class HexBoard():
         # prepare the provided board contents as strings, formatted to size.
         ran = range(-3, +3+1)
         cells = []
-        for qr in [(q, r) for q in ran for r in ran if -q-r in ran]:
-            cell = Colour.BLANK
-            if qr in self.blocks:
-                cell = Colour.BLOCK
-            elif qr in piecestate:
+        for coord in [(q, r) for q in ran for r in ran if -q-r in ran]:
+            cell = self[coord]
+            if coord in piecestate:
+                assert self.tiles[coord].colour != Colour.BLOCK
                 cell = self.player
 
             cells.append(str(cell).center(5))
@@ -272,12 +270,3 @@ class HexBoard():
         for state in piecestates:
             print(self.format_with_state(piecestate=state))
 
-
-def main():
-    hb = HexBoard(start_config_file="test.json")
-
-    print(hb.format_with_state())
-
-
-if __name__ == '__main__':
-    main()

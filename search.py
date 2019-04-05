@@ -22,28 +22,17 @@ from math import ceil
 from hexboard import Tile, Colour, PieceState, HexBoard
 from heapq import heappush, heappop
 from node import Node
-import parseBoard
+from parseboard import parseboard
 from heapy import Heap
 
-class PriorityQueue():
-    
-    def __init__(self):
-        self.queue = []
-        self.find = dict()
-    
-    def push(self, node):
-        heappush(self.queue, node)
+def parsejson(filename):
+    # extract data from json
+    with open(filename) as config_json:
+        config = json.load(config_json)
 
-    
-    def pop(self):
-        return heappop(self.queue)
+    return config
 
-    def __bool__(self):
-        return bool(self.queue)
-
-
-def main():
-    board = HexBoard(start_config_file=parseBoard.testname)
+def kanyeplspushthepieces(board):
     queue = Heap()
     bestnode = None
     # board.seen_states.add(board.start_state.pieces)
@@ -65,8 +54,24 @@ def main():
                 board.seen_states[node.state.pieces] = node
                 queue.push(node)
 
-    # bestnode.print_path()
-    bestnode.print_path_boards(board)
+    return bestnode
+
+def main():
+
+    if len(sys.argv)==1:
+        board_config = parseboard()
+    elif len(sys.argv)==2:
+        board_config = parsejson(sys.argv[1])
+    else:
+        print("Too many arguments", file=sys.stderr)
+        exit()
+
+    board = HexBoard(board_config)
+    
+    endnode = kanyeplspushthepieces(board)
+
+    # endnode.print_path()
+    endnode.print_path_boards(board)
                
 
 

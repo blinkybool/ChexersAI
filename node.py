@@ -5,18 +5,18 @@ preNode = namedtuple("preNode", ['state', 'cost', 'heu', 'parent', 'prevmove'])
 class Node(preNode):
 
     def __hash__(self):
-        return hash((self.cost, self.heu, self.parent, self.prevmove))
+        return hash((self.state.pieces, self.cost, self.heu))
 
     def isgoal(self):
         return not bool(self.state)
     
     # defines how a node should be prioritised for a priority queue.
     # since we are using A*, nodes are ordered based on cost + heuristic
-    def __eq__(self, other):
-        return (self.cost + self.heu) == (other.cost + other.heu)
+    # def __eq__(self, other):
+    #     return (self.cost + self.heu) == (other.cost + other.heu)
 
-    def __ne__(self, other):
-        return (self.cost + self.heu) != (other.cost + other.heu)
+    # def __ne__(self, other):
+    #     return (self.cost + self.heu) != (other.cost + other.heu)
 
     def __lt__(self, other):
         return (self.cost + self.heu) < (other.cost + other.heu)
