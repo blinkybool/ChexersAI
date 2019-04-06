@@ -5,18 +5,13 @@ preNode = namedtuple("preNode", ['state', 'cost', 'heu', 'parent', 'prevmove'])
 class Node(preNode):
 
     def __hash__(self):
-        return hash((self.state.pieces, self.cost, self.heu))
+        return hash((self.state, self.cost, self.heu))
 
     def isgoal(self):
         return not bool(self.state)
     
     # defines how a node should be prioritised for a priority queue.
     # since we are using A*, nodes are ordered based on cost + heuristic
-    # def __eq__(self, other):
-    #     return (self.cost + self.heu) == (other.cost + other.heu)
-
-    # def __ne__(self, other):
-    #     return (self.cost + self.heu) != (other.cost + other.heu)
 
     def __lt__(self, other):
         return (self.cost + self.heu) < (other.cost + other.heu)
@@ -32,7 +27,7 @@ class Node(preNode):
 
     def expand(self, board):
         for newstate, movestring in board.new_states(self.state):
-            yield Node(newstate, self.cost+1, newstate.get_heu(board), self, movestring)
+            yield Node(state=newstate, cost=self.cost+1, heu=board.state_heu(newstate), parent=self, prevmove=movestring)
 
     def get_state_path(self):
         if self.parent is not None:

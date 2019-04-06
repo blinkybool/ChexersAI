@@ -1,10 +1,10 @@
 from enum import Enum, unique
-from math import ceil
+from sys import stderr
 
 RADIUS = 3
 
 @unique
-class Colour(Enum):
+class Tile(Enum):
     BLANK = 0
     BLOCK = 1
     RED = 2
@@ -12,81 +12,39 @@ class Colour(Enum):
     BLUE = 4
 
     @classmethod
-    def parse(cls, colour):
+    def parse_colour(cls, colour):
         return {"red": cls.RED,
                 "green": cls.GREEN,
                 "blue": cls.BLUE}[colour.lower()]
 
     def is_player_colour(self):
-        return self.value > Colour.BLOCK.value
+        return self.value > Tile.BLOCK.value
 
     def __str__(self):
         return {0: " ", 1: "X", 2: "R", 3: "G", 4: "B"}[self.value]
 
-
-class Tile():
-
-    def __init__(self, colour, heuristic=None):
-        self.colour = colour
-        self.heuristic = heuristic
-
-    def __str__(self):
-        return self.colour.__str__()
-
-
-class PieceState():
-
-    def __init__(self, pieces=tuple()):
-        self.pieces = tuple(sorted(pieces))
-
-    def __hash__(self):
-        self.pieces.__hash__()
-
-    def __getitem__(self, key):
-        return self.pieces.__getitem__(key)
-
-    def __iter__(self):
-        return self.pieces.__iter__()
-
-    def get_heu(self, board):
-        return sum(map(board.tile_heu, self.pieces))
-
-    def __bool__(self):
-        return bool(self.pieces)
-
-    def __repr__(self):
-        return self.pieces.__repr__()
-
-    def __eq__(self, other):
-        return type(self)==type(other) and self.pieces == other.pieces
-
-
 '''
 Board state from the perspective of one player
 '''
-
-DEFAULT_PLAYER = 'red'
-
 
 class HexBoard():
 
     def __init__(self, config, radius=RADIUS):
         self.radius = radius
         self.tiles = {}
-        self.seen_states = {}
-        self.start_state = PieceState()
+        self.seenstates = {}
+        self.currentstate = tuple()
 
-        self.player = Colour.parse(config["colour"])
-        self.start_state = PieceState(tuple(map(tuple, config["pieces"])))
-        # self.blocks = tuple(map(tuple, config["blocks"]))
+        self.player = Tile.parse_colour(config["colour"])
+        self.currentstate = tuple(tuple(sorted(map(tuple, config["pieces"]))))
 
         # initialise all blank tiles
         for coord in self.iter_coords():
-            self[coord] = Tile(Colour.BLANK, self.goal_jump_dist(coord))
+            self[coord] = Tile.BLANK
 
         # set all the block positions
         for coord in config["blocks"]:
-            self[tuple(coord)].colour = Colour.BLOCK
+            self[tuple(coord)] = Tile.BLOCK
 
     def __getitem__(self, key):
         return self.tiles.__getitem__(key)
@@ -100,6 +58,10 @@ class HexBoard():
 
     def is_valid_coord(self, coord):
         return -RADIUS <= min(coord) and max(coord) <= RADIUS and abs(sum(coord)) <= RADIUS
+
+    def state_heu(self, state=None):
+        if state == None: state = self.currentstate
+        return sum(map(self.tile_heu, state))
 
     def tile_heu(self, coord):
         '''
@@ -121,39 +83,48 @@ class HexBoard():
         finds the distance from a given point to the player's goal tiles
         '''
 
-        return {Colour.RED:   RADIUS - coord[0],
-                Colour.GREEN: RADIUS - coord[1],
-                Colour.BLUE:  RADIUS - -sum(coord)}[self.player]
+        return {Tile.RED:   self.radius - coord[0],
+                Tile.GREEN: self.radius - coord[1],
+                Tile.BLUE:  self.radius - -sum(coord)}[self.player]
 
     def can_exit(self, piececoord):
         x, y = piececoord
-        if self.player==Colour.RED:
+        if self.player==Tile.RED:
             return x==RADIUS
-        if self.player==Colour.GREEN:
+        if self.player==Tile.GREEN:
             return y==RADIUS
-        if self.player==Colour.BLUE:
+        if self.player==Tile.BLUE:
             return x+y==-RADIUS
         else:
-            print("aaaaaaaaaaaahhhh")
+            print("aaaaaaaaaaaahhhh", file=stderr)
             exit()
-        # return {Colour.RED: bool(x==RADIUS), Colour.GREEN: bool(y == RADIUS), Colour.BLUE: bool(sum(x, y)==-RADIUS)}[self.player]
+        # return {Tile.RED: bool(x==RADIUS), Tile.GREEN: bool(y == RADIUS), Tile.BLUE: bool(sum(x, y)==-RADIUS)}[self.player]
 
     def occupied(self, coord, state):
-        return coord in state or self[coord].colour == Colour.BLOCK
+        return coord in state or self[coord] == Tile.BLOCK
 
-    def move_choices(self, piececoord, state):
-        x,y = piececoord
+    def movejumpchoices(self, piececoord, state):
+        q,r = piececoord
 
-        coords = (
-                ((x-1, y), (x-2, y)),
-                ((x-1, y+1), (x-2, y+2)),
-                ((x, y-1), (x, y-2)),
-                ((x, y+1), (x, y+2)),
-                ((x+1, y-1), (x+2, y-2)),
-                ((x+1, y), (x+2, y)),
+        movecoords = \
+            (
+                ( q ,r-1),(q+1,r-1)     ,
+                      #.-'-.#
+            (q-1, r )    ,    (q+1, r ) ,
+                      #-._.-#  
+                (q-1,r+1),( q ,r+1)     ,
             )
 
-        for movecoord, jumpcoord in coords:
+        jumpcoords = \
+            (
+                ( q ,r-2),(q+2,r-2)     ,
+                      #.-'-.#
+            (q-2, r )    ,    (q+2, r ) ,
+                      #-._.-#  
+                (q-2,r+2),( q ,r+2)     ,
+            )
+
+        for movecoord, jumpcoord in zip(movecoords, jumpcoords):
             if self.is_valid_coord(movecoord):
                 if self.occupied(movecoord,state):
                     if self.is_valid_coord(jumpcoord) and not self.occupied(jumpcoord,state):
@@ -161,31 +132,33 @@ class HexBoard():
                 else:
                     yield (movecoord, "MOVE")
         
-
     def new_states(self, state):
         '''
         takes a PieceState, and yields 2-tuples containing one of the new possible PieceStates
         and the would-be output for the move to that state
         '''
-        for i, piece in enumerate(state):
-            for action in self.move_choices(piece, state):
-                new_pieces = list(state.pieces).copy()
-                move = f"{action[1]} from {piece} to {action[0]}."
-                new_pieces[i] = action[0]
-                yield (PieceState(tuple(new_pieces)), move)
+        for acting_piece in state:
+            for new_pos, action in self.movejumpchoices(acting_piece, state):
 
-            if self.can_exit(piece):
-                new_pieces = list(state.pieces).copy()
-                move = f"EXIT from {new_pieces.pop(i)}."
-                yield (PieceState(tuple(new_pieces)), move)
+                # replace acting_piece with its new position
+                new_state = tuple(sorted(piece if piece!=acting_piece else new_pos for piece in state))
 
-    def format_with_state(self, piecestate=None, debug=False, message=''):
+                # right move string
+                move_action = f"{action} from {acting_piece} to {new_pos}."
+
+                yield (new_state, move_action)
+
+            if self.can_exit(acting_piece):
+                new_state = tuple(piece for piece in state if piece!=acting_piece)
+                exit_action = f"EXIT from {acting_piece}."
+                yield (tuple(sorted(new_state)), exit_action)
+
+    def format_with_state(self, state=None, debug=False, message=''):
         """
         Helper function to print a drawing of a hexagonal board's contents.
         """
 
-        if piecestate == None:
-            piecestate = self.start_state
+        if state == None: state = self.currentstate
 
         # Set up the board template:
         if not debug:
@@ -238,8 +211,8 @@ class HexBoard():
         cells = []
         for coord in [(q, r) for q in ran for r in ran if -q-r in ran]:
             cell = self[coord]
-            if coord in piecestate:
-                assert self.tiles[coord].colour != Colour.BLOCK
+            if coord in state:
+                assert self.tiles[coord] != Tile.BLOCK
                 cell = self.player
 
             cells.append(str(cell).center(5))
@@ -247,7 +220,7 @@ class HexBoard():
         # fill in the template to create the board drawing, then print!
         return template.format(message, *cells)
 
-    def print_path(self, piecestates):
-        for state in piecestates:
-            print(self.format_with_state(piecestate=state))
+    def print_path(self, states):
+        for state in states:
+            print(self.format_with_state(state=state))
 

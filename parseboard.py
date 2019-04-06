@@ -1,9 +1,9 @@
-import json, sys
+import json, sys, os
 '''
 Generate test case boards
 '''
 
-BOARD_INPUT_FILENAME = "boardinput.txt"
+DEFAULT_BOARD_FILENAME = "defaultboard.txt"
 
 # Pick player - (use same letter for board design)
 PLAYER = 'red'
@@ -25,11 +25,11 @@ PLAYER_TILES = "rgbRGB"
 BLOCK_TILES = "xX"
 EMPTY_TILE = '-'
 
-def parseboard():
+def parseboard(input_board_filename=DEFAULT_BOARD_FILENAME):
     
     template = {'colour': PLAYER, 'pieces': [], 'blocks': []}
 
-    with open(BOARD_INPUT_FILENAME) as board:
+    with open(input_board_filename) as board:
         for tile, coord in zip(board.read().split(), boardcoords):
             if tile in PLAYER_TILES:
                 template["pieces"].append(coord)
@@ -41,8 +41,12 @@ def parseboard():
     return template
 
 if __name__ == "__main__":
-    assert len(sys.argv)==2 and "Need 1 argument (file name for output)"
 
-    # Dump the board config into a json file
-    with open(sys.argv[1], 'w') as fp:
-        json.dump(parseboard(), fp)
+    if len(sys.argv)==1:
+        input_file = DEFAULT_BOARD_FILENAME
+    elif len(sys.argv)==2:
+        input_file = sys.argv[1]
+
+    # Dump the board config textfile into a json file
+    with open(input_file.split()[0]+".json", 'w') as fp:
+        json.dump(parseboard(input_file), fp)
