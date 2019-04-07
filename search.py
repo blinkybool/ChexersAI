@@ -48,6 +48,10 @@ def parsejson(filename):
 
 def kanyeplspushthepieces(board):
 
+    for piececoord in board.currentstate:
+        if board[piececoord].heu == None:
+            return None # Not possible for at least one piece to reach goal
+
     min_queue = Heap()
 
     startnode = Node(state=board.currentstate,
@@ -75,7 +79,7 @@ def kanyeplspushthepieces(board):
             sleep(SLEEP_TIME)
         
         if board.is_goal_state(min_node.state):
-            break
+            return min_node
         
         for adj_node in min_node.expand(board):
             if adj_node.state in board.seenstates:
@@ -87,7 +91,7 @@ def kanyeplspushthepieces(board):
                 board.seenstates[adj_node.state] = adj_node
                 min_queue.push(adj_node)
 
-    return min_node
+    
 
 def handle_input():
     # find board config file
@@ -115,6 +119,10 @@ def main():
     board = HexBoard(board_config)
 
     dest_node = kanyeplspushthepieces(board)
+
+    if dest_node==None:
+        print("# can't do it sorry :(")
+        return
 
     if PRINT_BOARD_PATH:
         board.print_path(dest_node)
