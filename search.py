@@ -23,9 +23,20 @@ from heapq import heappush, heappop
 from node import Node
 from parseboard import parseboard
 from heapy import Heap
+from time import sleep
 
-REPLACEMENTS = 0
-TESTMODE = True
+VANILLA_MODE = False
+PRINT_INSTRUCTIONS = True
+PRINT_EXECUTION = False
+PRINT_BOARD_PATH = True
+PRINT_HEURISTICS = True
+SLEEP_TIME = 0.01
+
+if VANILLA_MODE:
+    PRINT_INSTRUCTIONS = True
+    PRINT_BOARD_PATH = False
+    PRINT_EXECUTION = False
+    PRINT_HEURISTICS = False
 
 
 def parsejson(filename):
@@ -36,31 +47,47 @@ def parsejson(filename):
     return config
 
 def kanyeplspushthepieces(board):
-    global REPLACEMENTS
-    queue = Heap()
-    bestnode = None
-    startnode = Node(state=board.currentstate, cost=0, heu=board.state_heu(), parent=None, prevmove="",)
-    board.seenstates[board.currentstate] = startnode
-    queue.push(startnode)
-    while queue:
-        nextnode = queue.pop()
-        if (bestnode is not None) and (nextnode >= bestnode):     # pretty sure this is the break condition (even though the first one we find should be best)
-            break 
-        if nextnode.isgoal():
-            bestnode = nextnode
-            continue
-        for node in nextnode.expand(board):
-            if node.state in board.seenstates:
-                old_node = board.seenstates[node.state]
-                if node < old_node:
-                    REPLACEMENTS +=1
-                    queue.replace(old_node, node)
-                    board.seenstates[node.state] = node
-            else:
-                board.seenstates[node.state] = node
-                queue.push(node)
 
-    return bestnode
+    min_queue = Heap()
+
+    startnode = Node(state=board.currentstate,
+                     cost=0,
+                     heu=board.state_heu(),
+                     parent=None,
+                     prevmove="",)
+    
+    board.seenstates[board.currentstate] = startnode
+    min_queue.push(startnode)
+
+    if PRINT_EXECUTION:
+        nodes_expanded = 0
+        max_cost = 0
+    
+    while min_queue:
+        min_node = min_queue.pop()
+
+        if PRINT_EXECUTION:
+            nodes_expanded += 1
+            max_cost = max(max_cost, min_node.cost)
+            stats = f"min_queue size: {len(min_queue)}\n# nodes expanded: {nodes_expanded}\
+                        \n# max cost: {max_cost}\n# cur cost:{min_node.cost:2}" + min_node.cost*"#"
+            print(board.format_with_state(message=stats,state=min_node.state))
+            sleep(SLEEP_TIME)
+        
+        if board.is_goal_state(min_node.state):
+            break
+        
+        for adj_node in min_node.expand(board):
+            if adj_node.state in board.seenstates:
+                old_node = board.seenstates[adj_node.state]
+                if adj_node < old_node:
+                    min_queue.replace(old_node, adj_node)
+                    board.seenstates[adj_node.state] = adj_node
+            else:
+                board.seenstates[adj_node.state] = adj_node
+                min_queue.push(adj_node)
+
+    return min_node
 
 def handle_input():
     # find board config file
@@ -86,19 +113,18 @@ def main():
     board_config = handle_input()
 
     board = HexBoard(board_config)
-    
-    endnode = kanyeplspushthepieces(board)
 
-    # endnode.print_path()
-    # endnode.print_path_boards(board)
+    final_node = kanyeplspushthepieces(board)
 
-    if TESTMODE:
-        endnode.print_path_boards(board)
-        global REPLACEMENTS
-        print(f"STATS: replacements:{REPLACEMENTS}")
+    if PRINT_BOARD_PATH:
+        path_of_states = final_node.get_state_path()
+        board.print_path(path_of_states)
+        # final_node.print_path_boards(board)
     else:
-        endnode.print_path()
-        print("# yeehaw")
+        final_node.print_path()
+        print(f"# yeehaw {final_node.cost} moves")
+    
+    board.print_board_heuristics()
 
 
 if __name__ == '__main__':

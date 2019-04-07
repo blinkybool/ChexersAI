@@ -6,11 +6,8 @@ class Node(preNode):
 
     def __hash__(self):
         return hash((self.state, self.cost, self.heu))
-
-    def isgoal(self):
-        return not bool(self.state)
     
-    # defines how a node should be prioritised for a priority queue.
+    # defines how a node should be prioritised in a priority queue.
     # since we are using A*, nodes are ordered based on cost + heuristic
 
     def __lt__(self, other):
@@ -26,13 +23,13 @@ class Node(preNode):
         return (self.cost + self.heu) >= (other.cost + other.heu)
 
     def expand(self, board):
-        for newstate, movestring in board.new_states(self.state):
-            yield Node(state=newstate, cost=self.cost+1, heu=board.state_heu(newstate), parent=self, prevmove=movestring)
+        for adj_state, movestring in board.adj_states(self.state):
+            yield Node(state=adj_state, cost=self.cost+1, heu=board.state_heu(adj_state), parent=self, prevmove=movestring)
 
     def get_state_path(self):
-        if self.parent is not None:
-            return self.parent.get_state_path().append(self.state)
-        return [self.state]
+        if self.parent != None:
+            yield from self.parent.get_state_path()
+        yield self.state
 
     def print_path(self):
         if self.parent is not None:
