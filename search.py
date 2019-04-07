@@ -114,17 +114,16 @@ def main():
 
     board = HexBoard(board_config)
 
-    final_node = kanyeplspushthepieces(board)
+    dest_node = kanyeplspushthepieces(board)
 
     if PRINT_BOARD_PATH:
-        path_of_states = final_node.get_state_path()
-        board.print_path(path_of_states)
-        # final_node.print_path_boards(board)
-    else:
-        final_node.print_path()
-        print(f"# yeehaw {final_node.cost} moves")
+        board.print_path(dest_node)
     
-    board.print_board_heuristics()
+    dest_node.print_instructions()
+    print(f"# yeehaw {dest_node.cost} moves")
+    
+    if PRINT_HEURISTICS:
+        board.print_board_heuristics()
 
 
 if __name__ == '__main__':

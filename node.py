@@ -1,4 +1,5 @@
 from collections import namedtuple  
+from itertools import islice
 
 preNode = namedtuple("preNode", ['state', 'cost', 'heu', 'parent', 'prevmove'])
 
@@ -26,17 +27,14 @@ class Node(preNode):
         for adj_state, movestring in board.adj_states(self.state):
             yield Node(state=adj_state, cost=self.cost+1, heu=board.state_heu(adj_state), parent=self, prevmove=movestring)
 
-    def get_state_path(self):
+    def path_from_source(self):
         if self.parent != None:
-            yield from self.parent.get_state_path()
-        yield self.state
+            yield from self.parent.path_from_source()
+        yield self
 
-    def print_path(self):
-        if self.parent is not None:
-            self.parent.print_path()
-            print(self.prevmove)
-
-    def print_path_boards(self,board):
-        if self.parent is not None:
-            self.parent.print_path_boards(board)
-        print(board.format_with_state(self.state, message=f"c={self.cost} + h={self.heu} == {self.cost+self.heu}"))
+    def print_instructions(self):
+        for node in islice(self.path_from_source(), 1, None):
+            print(node.prevmove)
+        # if self.parent is not None:
+        #     self.parent.print_path()
+        #     print(self.prevmove)

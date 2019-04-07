@@ -180,7 +180,6 @@ class HexBoard():
 
                     yield (movecoord, "MOVE")
 
-        
     def adj_states(self, state):
         '''
         takes a PieceState, and yields 2-tuples containing one of the new possible PieceStates
@@ -245,9 +244,9 @@ class HexBoard():
 
         return template.format(message, *cells)
 
-    def print_path(self, states):
-        for state in states:
-            print(self.format_with_state(state=state))
+    def print_path(self, dest_node):
+        for node in dest_node.path_from_source():
+            print(self.format_with_state(state=node.state, message=f"c={node.cost} + h={node.heu} == {node.cost+node.heu}"))
 
     def print_board_heuristics(self):
         print(self.format_with_state(message="heuristics: ", heuristic_mode=True))
