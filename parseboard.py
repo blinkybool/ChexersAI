@@ -3,7 +3,7 @@ import json, sys, os
 Generate test case boards
 '''
 
-DEFAULT_BOARD_FILENAME = "test/nopath.txt"
+DEFAULT_BOARD_FILENAME = "defaultboard.txt"
 
 # Pick player - (use same letter for board design)
 PLAYER = 'red'

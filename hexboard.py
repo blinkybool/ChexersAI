@@ -78,9 +78,9 @@ class HexBoard():
         return sum(self[coord].heu for coord in state)
 
     def set_tile_heuristics(self):
-        # self.basic_heuristics()
+        self.basic_heuristics()
         # self.better_heuristics()
-        self.dijkstra_heuristics()
+        # self.dijkstra_heuristics()
 
     def basic_heuristics(self):
         '''
