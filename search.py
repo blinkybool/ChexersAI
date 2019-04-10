@@ -51,26 +51,35 @@ def kanyeplspushthepieces(board):
     for piececoord in board.currentstate:
         if board[piececoord].heu == None:
             return None # Not possible for at least one piece to reach goal
-
-    min_queue = Heap()
-    #
+    
+     
+    
+    # Construct the first node based on start conditions
     startnode = Node(state=board.currentstate,
                      cost=0,
                      heu=board.state_heu(),
                      parent=None,
                      prevmove="",)
     
-    board.seenstates[board.currentstate] = startnode
+    # Create a min-priority, using key = (cost + heuristic)
+    min_queue = Heap()
     min_queue.push(startnode)
+
+    # keep track of all nodes seen, starting with startnode
+    # seenstates is a dictionary with key = board state, value = the node with that state
+    board.seenstates[board.currentstate] = startnode
+    
 
     if PRINT_EXECUTION:
         nodes_expanded = 0
         max_cost = 0
     
+    # process every node in the queue until goal is found or search exhausted
     while min_queue:
         min_node = min_queue.pop()
 
         if PRINT_EXECUTION:
+            # Prints out the state of each node as it is processed, for debugging purposes
             nodes_expanded += 1
             max_cost = max(max_cost, min_node.cost)
             stats = f"min_queue size: {len(min_queue)}\n# nodes expanded: {nodes_expanded}\
@@ -79,15 +88,25 @@ def kanyeplspushthepieces(board):
             sleep(SLEEP_TIME)
         
         if board.is_goal_state(min_node.state):
+            # if min_node is a goal state, it must be an optimal solution.
+            # The priority queue ensures for every other node, min_node.cost <= node.cost + node.heuristic.
+            # The heuristic is admissible, hence every other node must lead to a solution at least as expensive
+            # as the current min_node
             return min_node
         
+        # expand the min node
         for adj_node in min_node.expand(board):
+            # Check if we have seen this state before
             if adj_node.state in board.seenstates:
                 old_node = board.seenstates[adj_node.state]
-                if adj_node < old_node:
+                # Check if new node is cheaper than the previous node with same state.
+                # (it IS possible that the second node is cheaper)
+                if adj_node < old_node: # < operator compares nodes based on the same key as the queue (cost + heuristic)
+                    # replace old node with new node in queue
                     min_queue.replace(old_node, adj_node)
                     board.seenstates[adj_node.state] = adj_node
             else:
+                # if state is unseen, add to queue to be processed
                 board.seenstates[adj_node.state] = adj_node
                 min_queue.push(adj_node)
 
