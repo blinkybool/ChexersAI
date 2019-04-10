@@ -132,23 +132,26 @@ def handle_input():
 
 
 def main():
-
+    # initialise piece positions and store block positions
     board_config = handle_input()
-
     board = HexBoard(board_config)
-
+    # run search algorithm
     dest_node = kanyeplspushthepieces(board)
 
     if dest_node==None:
         print("# can't do it sorry :(")
         return
 
+    # prints the required output
     if PRINT_BOARD_PATH:
         board.print_path(dest_node)
     
     dest_node.print_instructions()
+
+    # Billy insisting on doing a weird output for some reason
     print(f"# yeehaw {dest_node.cost} moves")
     
+    # used for debug purposes
     if PRINT_HEURISTICS:
         board.print_board_heuristics()
 
