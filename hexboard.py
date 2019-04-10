@@ -6,6 +6,9 @@ RADIUS = 3
 
 @unique
 class Colour(Enum):
+    '''
+    Enum class representing the different types of occupants of a tile
+    '''
     BLANK = 0
     BLOCK = 1
     RED = 2
@@ -19,6 +22,9 @@ class Colour(Enum):
                 "blue": cls.BLUE}[colour.lower()]
 
     def is_player_colour(self):
+        '''
+        determines whether a tile is occupied by a player piece
+        '''
         return self.value > Colour.BLOCK.value
 
     def __str__(self):
@@ -129,7 +135,6 @@ class HexBoard():
         to facilitate jumps
         '''
 
-
         queue = Heap()
         seen_coords = {}
         for exit_coord in self.exit_coords:
@@ -142,7 +147,9 @@ class HexBoard():
             min_cost, min_coord = queue.pop()
             self[min_coord].heu = min_cost
 
+            # assume pieces can jump over empty squares
             for next_coord, _ in self.movejumpchoices(min_coord, tuple(), allowemptyjumps=True):
+                # push accessible coords to queue if not seen before
                 if next_coord in seen_coords:
                     old_cost = seen_coords[next_coord]
                     if min_cost+1 < old_cost:
@@ -162,7 +169,6 @@ class HexBoard():
         '''
         finds the distance from a given point to the player's goal tiles
         '''
-
         return {Colour.RED:   self.radius - coord[0],
                 Colour.GREEN: self.radius - coord[1],
                 Colour.BLUE:  self.radius - -sum(coord)}[self.player]
@@ -171,6 +177,9 @@ class HexBoard():
         return len(state)==0
 
     def is_exit_tile(self, coord):
+        '''
+        Determines if a tile is one that cacn be exited from
+        '''
         if self[coord].colour == Colour.BLOCK:
             return False
         
@@ -184,8 +193,14 @@ class HexBoard():
         return coord in state or self[coord].colour == Colour.BLOCK
 
     def movejumpchoices(self, piececoord, state, allowemptyjumps=False):
+        '''
+        yields all possible coordinates that can be moved to from piececoord
+        and a string representation of the move type to reach it
+        allowemptyjumps is used when performing dijkstra for the heuristic.
+        '''
         q,r = piececoord
 
+        # all directly coordinates directly adjacent to piececoord (presented visually)
         movecoords = \
             (
                 ( q ,r-1),(q+1,r-1)     ,
@@ -195,6 +210,7 @@ class HexBoard():
                 (q-1,r+1),( q ,r+1)     ,
             )
 
+        # all coords within jumping distance
         jumpcoords = \
             (
                 ( q ,r-2),(q+2,r-2)     ,
@@ -204,16 +220,21 @@ class HexBoard():
                 (q-2,r+2),( q ,r+2)     ,
             )
 
+        # determines which coordinates are accessible in each direction
         for movecoord, jumpcoord in zip(movecoords, jumpcoords):
             if self.is_valid_coord(movecoord):
+                # check if immediate neighbour is occupied
                 if self.occupied(movecoord,state):
+                    # if so, check if jumping is available
                     if self.is_valid_coord(jumpcoord) and not self.occupied(jumpcoord,state):
                         yield (jumpcoord,"JUMP")
                 else:
+                    # jumping might still be available if allowemptyjumps is True
                     if allowemptyjumps and self.is_valid_coord(jumpcoord) and not self.occupied(jumpcoord):
                         yield (jumpcoord, "JUMP")
-
+                    # immediate neighbour is empty, so a basic move is available
                     yield (movecoord, "MOVE")
+
 
     def adj_states(self, state):
         '''
@@ -235,6 +256,8 @@ class HexBoard():
                 new_state = tuple(piece for piece in state if piece!=acting_piece)
                 exit_action = f"EXIT from {acting_piece}."
                 yield (tuple(sorted(new_state)), exit_action)
+
+
 
     def format_with_state(self, state=None, debug=False, message='', heuristic_mode=False):
         """
