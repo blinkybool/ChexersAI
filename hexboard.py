@@ -78,14 +78,14 @@ class HexBoard():
         return sum(self[coord].heu for coord in state)
 
     def set_tile_heuristics(self):
-        self.basic_heuristics()
+        # self.basic_heuristics()
         # self.better_heuristics()
-        # self.dijkstra_heuristics()
+        self.dijkstra_heuristics()
 
     def basic_heuristics(self):
         '''
         takes a hexboard and assigns a heuristic value to each tile (dependent on player)
-        VERSION 1: number of jumps from end tiles (H = ceiling(D/2))
+        VERSION 1: number of jumps from end tiles (H = D/2+1)
         '''
         for coord in self.iter_coords():
             if self[coord].colour != Colour.BLOCK:

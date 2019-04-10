@@ -27,7 +27,7 @@ from time import sleep
 
 VANILLA_MODE = False
 PRINT_INSTRUCTIONS = True
-PRINT_EXECUTION = False
+PRINT_EXECUTION = True
 PRINT_BOARD_PATH = True
 PRINT_HEURISTICS = True
 SLEEP_TIME = 0.01
@@ -53,7 +53,7 @@ def kanyeplspushthepieces(board):
             return None # Not possible for at least one piece to reach goal
 
     min_queue = Heap()
-
+    #
     startnode = Node(state=board.currentstate,
                      cost=0,
                      heu=board.state_heu(),
