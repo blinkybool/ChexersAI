@@ -61,12 +61,14 @@ def kanyeplspushthepieces(board):
                      parent=None,
                      prevmove="",)
     
-    # Create a min-priority, using key = (cost + heuristic)
+    # Create a min-priority, using key = (cost + heuristic) defined in Node Class
     min_queue = Heap()
     min_queue.push(startnode)
 
     # keep track of all nodes seen, starting with startnode
-    # seenstates is a dictionary with key = board state, value = the node with that state
+    # seenstates is a dictionary with...
+        # key: board state
+        # value: the node with that state
     board.seenstates[board.currentstate] = startnode
     
 
@@ -101,7 +103,7 @@ def kanyeplspushthepieces(board):
                 old_node = board.seenstates[adj_node.state]
                 # Check if new node is cheaper than the previous node with same state.
                 # (it IS possible that the second node is cheaper)
-                if adj_node < old_node: # < operator compares nodes based on the same key as the queue (cost + heuristic)
+                if adj_node < old_node: # < operator compares nodes based on the same key as the queue (cost + heuristic) (See Node Class)
                     # replace old node with new node in queue
                     min_queue.replace(old_node, adj_node)
                     board.seenstates[adj_node.state] = adj_node
@@ -142,10 +144,11 @@ def main():
         print("# can't do it sorry :(")
         return
 
-    # prints the required output
+    # prints every board state along the path (run with "| more -16" to animate with spacebar)
     if PRINT_BOARD_PATH:
         board.print_path(dest_node)
     
+    # prints the required output
     dest_node.print_instructions()
 
     # Billy insisting on doing a weird output for some reason
