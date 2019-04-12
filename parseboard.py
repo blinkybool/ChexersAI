@@ -1,6 +1,6 @@
 import json, sys, os
 '''
-Generate test case boards
+Generates board configurations from a board text file
 '''
 
 DEFAULT_BOARD_FILENAME = "defaultboard.txt"
@@ -10,7 +10,7 @@ PLAYER = 'red'
 # PLAYER = 'green'
 # PLAYER = 'blue'
 
-########################################################
+##############################################################################
 
 boardcoords = \
 (           ( 0,-3),( 1,-3),( 2,-3),( 3,-3),
@@ -46,6 +46,8 @@ if __name__ == "__main__":
         input_file = DEFAULT_BOARD_FILENAME
     elif len(sys.argv)==2:
         input_file = sys.argv[1]
+    else:
+        print("# bad input", file=sys.stderr)
 
     # Dump the board config textfile into a json file
     with open(input_file.split()[0]+".json", 'w') as fp:

@@ -17,17 +17,16 @@ Hello {markerName}, my name is Kanye's fingers, and I'm here to use my fingers t
 """
 
 import os, sys, json
-from math import ceil
 from hexboard import Tile, HexBoard
-from heapq import heappush, heappop
 from node import Node
 from parseboard import parseboard
 from heapy import Heap
 from time import sleep
 
+# Flags for different debugging modes
 VANILLA_MODE = False
 PRINT_INSTRUCTIONS = True
-PRINT_EXECUTION = True
+PRINT_EXECUTION = False
 PRINT_BOARD_PATH = True
 PRINT_HEURISTICS = True
 SLEEP_TIME = 0
@@ -39,6 +38,7 @@ if VANILLA_MODE:
     PRINT_HEURISTICS = False
 
 
+
 def parsejson(filename):
     # extract data from json
     with open(filename) as config_json:
@@ -46,13 +46,40 @@ def parsejson(filename):
 
     return config
 
-def kanyeplspushthepieces(board):
 
+def handle_input():
+    '''
+    get board config file by parsing text/json file specified by cmd-line argument
+    or just parse the default input textfile
+    '''
+    if len(sys.argv)==1:
+        # Get the default board config returned by parseboard
+        return parseboard()
+    elif len(sys.argv)==2:
+        try:
+            # determine if the input is a txt file or json file
+            input_file = sys.argv[1]
+            file_ext = os.path.splitext(input_file)[1]
+
+            # parse accordingly
+            return {'.json': parsejson,
+                    '.txt' : parseboard}[file_ext](input_file)
+        except:
+            print("# bad input", file=sys.stderr)
+            exit()
+    else:
+        print("# too many arguments (expected 0 or 1)", file=sys.stderr)
+        exit()
+
+
+def A_star_search(board):
+    '''
+    finds a best sequences of moves to get every player piece off the board
+    in the least possible number of moves
+    '''
     for piececoord in board.currentstate:
         if board[piececoord].heu == None:
             return None # Not possible for at least one piece to reach goal
-    
-     
     
     # Construct the first node based on start conditions
     startnode = Node(state=board.currentstate,
@@ -69,15 +96,16 @@ def kanyeplspushthepieces(board):
     # seenstates is a dictionary with...
         # key: board state
         # value: the node with that state
-    board.seenstates[board.currentstate] = startnode
+    seenstates = {board.currentstate: startnode}
     
-
+    # for debugging
     if PRINT_EXECUTION:
         nodes_expanded = 0
         max_cost = 0
     
     # process every node in the queue until goal is found or search exhausted
     while min_queue:
+
         min_node = min_queue.pop()
 
         if PRINT_EXECUTION:
@@ -86,59 +114,39 @@ def kanyeplspushthepieces(board):
             max_cost = max(max_cost, min_node.cost)
             stats = f"min_queue size: {len(min_queue)}\n# nodes expanded: {nodes_expanded}\
                         \n# max cost: {max_cost}\n# cur cost:{min_node.cost:2}" + min_node.cost*"#"
-            print(board.format_with_state(message=stats,state=min_node.state))
+            print(board.format_board(message=stats,state=min_node.state))
             sleep(SLEEP_TIME)
         
         if board.is_goal_state(min_node.state):
-            # if min_node is a goal state, it must be an optimal solution.
-            # The priority queue ensures for every other node, min_node.cost <= node.cost + node.heuristic.
-            # The heuristic is admissible, hence every other node must lead to a solution at least as expensive
-            # as the current min_node
+            # if min_node is a goal state, it must be an optimal solution 
+            # due to the optimality of A*
             return min_node
         
         # expand the min node
         for adj_node in min_node.expand(board):
             # Check if we have seen this state before
-            if adj_node.state in board.seenstates:
-                old_node = board.seenstates[adj_node.state]
+            if adj_node.state in seenstates:
+                old_node = seenstates[adj_node.state]
                 # Check if new node is cheaper than the previous node with same state.
                 # (it IS possible that the second node is cheaper)
-                if adj_node < old_node: # < operator compares nodes based on the same key as the queue (cost + heuristic) (See Node Class)
+                if adj_node < old_node: # < operator compares (cost + heuristic), as specified in Node class
                     # replace old node with new node in queue
                     min_queue.replace(old_node, adj_node)
-                    board.seenstates[adj_node.state] = adj_node
+                    seenstates[adj_node.state] = adj_node
             else:
                 # if state is unseen, add to queue to be processed
-                board.seenstates[adj_node.state] = adj_node
                 min_queue.push(adj_node)
-
-    
-
-def handle_input():
-    # find board config file
-    if len(sys.argv)==1:
-        return parseboard()
-    elif len(sys.argv)==2:
-        try:
-            input_file = sys.argv[1]
-            file_ext = os.path.splitext(input_file)[1]
-            return {'.json': parsejson,
-                    '.txt' : parseboard}[file_ext](input_file)
-        except:
-            print("bad input", file=sys.stderr)
-            exit()
-    else:
-        print("bad input", file=sys.stderr)
-        exit()
-
-
+                seenstates[adj_node.state] = adj_node
 
 def main():
-    # initialise piece positions and store block positions
+    # find a board configuration from input
     board_config = handle_input()
+
+    # initialise board
     board = HexBoard(board_config)
+
     # run search algorithm
-    dest_node = kanyeplspushthepieces(board)
+    dest_node = A_star_search(board)
 
     if dest_node==None:
         print("# can't do it sorry :(")

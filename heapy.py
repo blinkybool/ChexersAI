@@ -1,4 +1,18 @@
-import sys
+'''
+This module was adapted from the source code of the heapq module
+found here https://github.com/python/cpython/blob/master/Lib/heapq.py
+Specifically the below functions were modified and included in this module
+    - heappush --> push
+    - heappop --> pop
+    - _siftdown --> __siftdown
+    - _siftup --> __siftup
+
+These functions all need to be adapted in order to maintain the dictionary attribute "heapmap"
+which maps items in the heap to their exact index/position in the list attribute, "heap"
+
+This allows us to find, and replace items anywhere in the heap in constant time (average),
+after which we apply the siftdown or siftup to maintain the heap invariant
+'''
 
 class Heap():
     '''
@@ -27,23 +41,34 @@ class Heap():
         return self.heap.__getitem__(key)
 
     def __setitem__(self, key, item):
-        # key: position in heap
-        # item: item in heap (and key of heapmap)
+        '''
+        key: position in heap
+        item: item in heap (and key of heapmap)
+        '''
         self.heap[key] = item
         self.heapmap[item] = key
 
     def replace(self, item, newitem):
+        '''
+        replaces 'item' with 'newitem' in the heap in logarithmic time
+        maintaining the heap invariant.
+        '''
+        # get the position of item
         pos = self.heapmap.pop(item)
+        # replace it with newitem (in heap and heapmap)
         self[pos] = newitem
+
+        # reorder heap as necessary
         if newitem < item:
             self.__siftdown(0, pos)
         elif newitem > item:
             self.__siftup(pos)
     
     def push(self, item):
+        '''Push an item to the heap maintaining the heap invariant'''
+        # we don't want equal items needing a mapping to 2 different positions
         if item in self.heapmap:
-            print("# tried to push equal node to heap", file=sys.stderr)
-            exit()
+            return
         
         self.heap.append(item)
         lastpos = len(self) - 1

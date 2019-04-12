@@ -1,14 +1,11 @@
 from enum import Enum, unique
-from sys import stderr
 from heapy import Heap
 
 RADIUS = 3
 
 @unique
 class Colour(Enum):
-    '''
-    Enum class representing the different types of occupants of a tile
-    '''
+    '''Enum class representing the different types of occupants of a tile'''
     BLANK = 0
     BLOCK = 1
     RED = 2
@@ -22,18 +19,18 @@ class Colour(Enum):
                 "blue": cls.BLUE}[colour.lower()]
 
     def is_player_colour(self):
-        '''
-        determines whether a tile is occupied by a player piece
-        '''
+        '''determines whether a tile is occupied by a player piece'''
         return self.value > Colour.BLOCK.value
 
     def __str__(self):
-        return {0: " ", 1: "X", 2: "R", 3: "G", 4: "B"}[self.value]
+        return {Colour.BLANK: " ",
+                Colour.BLOCK: "X",
+                Colour.RED:   "R",
+                Colour.GREEN: "G",
+                Colour.BLUE:  "B"}[self]
 
 class Tile():
-    ''' 
-    Represents the state and heuristic value of a tile
-    ''' 
+    ''' Represents the state and heuristic value of a tile''' 
     def __init__(self, colour=Colour.BLANK, heu=None):
         self.colour = colour
         self.heu = heu
@@ -44,13 +41,10 @@ class Tile():
 
 
 class HexBoard():
-    '''
-    Board state from the perspective of one player
-    '''
+    '''Represents a board configuration from the perspective of one player'''
     def __init__(self, config, radius=RADIUS):
         self.radius = radius
         self.tiles = {}
-        self.seenstates = {}
         self.currentstate = tuple()
         self.player = Colour.parse_colour(config["colour"])
         self.currentstate = tuple(tuple(sorted(map(tuple, config["pieces"]))))
@@ -77,9 +71,7 @@ class HexBoard():
         return self.tiles.__setitem__(key, item)
 
     def iter_coords(self):
-        '''
-        returns a generator which systematically enumerates every tile coordinate on the hexboard
-        '''
+        '''returns a generator which enumerates every tile coordinate on the hexboard'''
         ran = range(-self.radius, self.radius + 1)
         return ((q, r) for q in ran for r in ran if -q-r in ran)
 
@@ -202,23 +194,15 @@ class HexBoard():
 
         # all directly coordinates directly adjacent to piececoord (presented visually)
         movecoords = \
-            (
-                ( q ,r-1),(q+1,r-1)     ,
-                      #.-'-.#
-            (q-1, r )    ,    (q+1, r ) ,
-                      #-._.-#  
-                (q-1,r+1),( q ,r+1)     ,
-            )
+               (( q ,r-1),(q+1,r-1),
+            (q-1, r )    ,    (q+1, r ),
+                (q-1,r+1),( q ,r+1))
 
         # all coords within jumping distance
         jumpcoords = \
-            (
-                ( q ,r-2),(q+2,r-2)     ,
-                      #.-'-.#
-            (q-2, r )    ,    (q+2, r ) ,
-                      #-._.-#  
-                (q-2,r+2),( q ,r+2)     ,
-            )
+               (( q ,r-2),(q+2,r-2),
+            (q-2, r )    ,    (q+2, r ),
+                (q-2,r+2),( q ,r+2))
 
         # determines which coordinates are accessible in each direction
         for movecoord, jumpcoord in zip(movecoords, jumpcoords):
@@ -235,10 +219,9 @@ class HexBoard():
                     # immediate neighbour is empty, so a basic move is available
                     yield (movecoord, "MOVE")
 
-
     def adj_states(self, state):
         '''
-        takes a PieceState, and yields 2-tuples containing one of the new possible PieceStates
+        takes a piece state, and yields 2-tuples containing one of the new possible PieceStates
         and the would-be output for the move to that state
         '''
         for acting_piece in state:
@@ -247,7 +230,7 @@ class HexBoard():
                 # replace acting_piece with its new position
                 new_state = tuple(sorted(piece if piece!=acting_piece else new_pos for piece in state))
 
-                # right move string
+                # write move action string
                 move_action = f"{action} from {acting_piece} to {new_pos}."
 
                 yield (new_state, move_action)
@@ -259,7 +242,7 @@ class HexBoard():
 
 
 
-    def format_with_state(self, state=None, debug=False, message='', heuristic_mode=False):
+    def format_board(self, state=None, debug=False, message='', heuristic_mode=False):
         """
         Helper function to print a drawing of a hexagonal board's contents.
         """
@@ -285,9 +268,8 @@ class HexBoard():
 
 
         # prepare the provided board contents as strings, formatted to size.
-        ran = range(-RADIUS, +RADIUS+1)
         cells = []
-        for coord in [(q, r) for q in ran for r in ran if -q-r in ran]:
+        for coord in self.iter_coords():
 
             if heuristic_mode:
                 tile = self[coord]
@@ -304,9 +286,7 @@ class HexBoard():
 
     def print_path(self, dest_node):
         for node in dest_node.path_from_source():
-            print(self.format_with_state(state=node.state, message=f"c={node.cost} + h={node.heu} == {node.cost+node.heu}"))
+            print(self.format_board(state=node.state, message=f"c={node.cost} + h={node.heu} == {node.cost+node.heu}"))
 
     def print_board_heuristics(self):
-        print(self.format_with_state(message="heuristics: ", heuristic_mode=True))
-
-
+        print(self.format_board(message="heuristics: ", heuristic_mode=True))
