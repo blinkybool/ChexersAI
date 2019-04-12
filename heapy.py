@@ -1,6 +1,14 @@
 import sys
 
 class Heap():
+    '''
+    Min-Heap structure which implements the standard logarithmic time push and pop methods,
+    but with the addition of a constant time update-key operation, "replace".
+
+    attributes:
+        heap - a list of the data, in which the min-heap invariant is maintained
+        heamap - a map from items in the heap to their respective index positions in the heap
+    '''
     
     def __init__(self):
         self.heap = []
@@ -34,7 +42,7 @@ class Heap():
     
     def push(self, item):
         if item in self.heapmap:
-            print("tried to push equal node to heap", file=sys.stderr)
+            print("# tried to push equal node to heap", file=sys.stderr)
             exit()
         
         self.heap.append(item)
@@ -90,6 +98,7 @@ class Heap():
         self.__siftdown(startpos, pos)
 
 if __name__ == "__main__":
+    # testing heap module
     myheap = Heap()
     myheap.push(8)
     myheap.push(5)
