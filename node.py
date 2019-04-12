@@ -35,6 +35,3 @@ class Node(preNode):
     def print_instructions(self):
         for node in islice(self.path_from_source(), 1, None):
             print(node.prevmove)
-        # if self.parent is not None:
-        #     self.parent.print_path()
-        #     print(self.prevmove)

@@ -78,9 +78,9 @@ class HexBoard():
         return sum(self[coord].heu for coord in state)
 
     def set_tile_heuristics(self):
-        self.basic_heuristics()
+        # self.basic_heuristics()
         # self.better_heuristics()
-        # self.dijkstra_heuristics()
+        self.dijkstra_heuristics()
 
     def basic_heuristics(self):
         '''
@@ -107,7 +107,7 @@ class HexBoard():
             min_cost, min_coord = queue.pop()
             self[min_coord].heu = min_cost
 
-            for next_coord, _ in self.movejumpchoices(min_coord, tuple(), allowemptyjumps=True):
+            for next_coord, _ in self.movejumpchoices(min_coord, allowemptyjumps=True):
                 if next_coord in seen_coords:
                     old_cost = seen_coords[next_coord]
                     if min_cost+1 < old_cost:
@@ -148,7 +148,7 @@ class HexBoard():
     def occupied(self, coord, state=tuple()):
         return coord in state or self[coord].colour == Colour.BLOCK
 
-    def movejumpchoices(self, piececoord, state, allowemptyjumps=False):
+    def movejumpchoices(self, piececoord, state=tuple(), allowemptyjumps=False):
         q,r = piececoord
 
         movecoords = \
