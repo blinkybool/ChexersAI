@@ -24,7 +24,7 @@ from heapy import Heap
 from time import sleep
 
 # Flags for different debugging modes
-VANILLA_MODE = False
+VANILLA_MODE = True
 PRINT_INSTRUCTIONS = True
 PRINT_EXECUTION = False
 PRINT_BOARD_PATH = True
@@ -112,8 +112,10 @@ def A_star_search(board):
             # Prints out the state of each node as it is processed, for debugging purposes
             nodes_expanded += 1
             max_cost = max(max_cost, min_node.cost)
-            stats = f"min_queue size: {len(min_queue)}\n# nodes expanded: {nodes_expanded}\
-                        \n# max cost: {max_cost}\n# cur cost:{min_node.cost:2}" + min_node.cost*"#"
+            stats = f"min_queue size: {len(min_queue)}\
+                        \n# nodes expanded: {nodes_expanded}\
+                        \n# max cost: {max_cost}\
+                        \n# cur cost:{min_node.cost:2}" + min_node.cost*"#"
             print(board.format_board(message=stats,state=min_node.state))
             sleep(SLEEP_TIME)
         
@@ -165,7 +167,6 @@ def main():
     # used for debug purposes
     if PRINT_HEURISTICS:
         board.print_board_heuristics()
-
 
 if __name__ == '__main__':
     main()
