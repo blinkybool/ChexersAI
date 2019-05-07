@@ -20,15 +20,17 @@ Hello {markerName}, my name is Kanye's fingers, and I'm here to use my fingers t
 import os, sys, json
 from hexboard import Tile, HexBoard
 from node import Node
-from parseboard import parseboard
+from parseboard import parseboardinput
 from heapy import Heap
 from time import sleep
 
+#------------------------------------------------------------------------------
 # Flags for different debugging modes
-VANILLA_MODE = True
-PRINT_INSTRUCTIONS = True
+#------------------------------------------------------------------------------
+VANILLA_MODE = False
+PRINT_INSTRUCTIONS = False
 PRINT_EXECUTION = False
-PRINT_BOARD_PATH = True
+PRINT_BOARD_PATH = False
 PRINT_HEURISTICS = True
 SLEEP_TIME = 0
 
@@ -38,40 +40,7 @@ if VANILLA_MODE:
     PRINT_EXECUTION = False
     PRINT_HEURISTICS = False
 
-
-
-def parsejson(filename):
-    # extract data from json
-    with open(filename) as config_json:
-        config = json.load(config_json)
-
-    return config
-
-
-def handle_input():
-    '''
-    get board config file by parsing text/json file specified by cmd-line argument
-    or just parse the default input textfile
-    '''
-    if len(sys.argv)==1:
-        # Get the default board config returned by parseboard
-        return parseboard()
-    elif len(sys.argv)==2:
-        try:
-            # determine if the input is a txt file or json file
-            input_file = sys.argv[1]
-            file_ext = os.path.splitext(input_file)[1]
-
-            # parse accordingly
-            return {'.json': parsejson,
-                    '.txt' : parseboard}[file_ext](input_file)
-        except:
-            print("# bad input", file=sys.stderr)
-            exit()
-    else:
-        print("# too many arguments (expected 0 or 1)", file=sys.stderr)
-        exit()
-
+#------------------------------------------------------------------------------
 
 def A_star_search(board):
     '''
@@ -87,7 +56,7 @@ def A_star_search(board):
                      cost=0,
                      heu=board.state_heu(),
                      parent=None,
-                     prevmove="",)
+                     prev_action=None)
     
     # Create a min-priority, using key = (cost + heuristic) defined in Node Class
     min_queue = Heap()
@@ -143,10 +112,14 @@ def A_star_search(board):
 
 def main():
     # find a board configuration from input
-    board_config = handle_input()
+    board_config = parseboardinput()
 
     # initialise board
     board = HexBoard(board_config)
+    
+    # used for debug purposes
+    if PRINT_HEURISTICS:
+        board.print_board_heuristics()
 
     # run search algorithm
     dest_node = A_star_search(board)
@@ -164,10 +137,6 @@ def main():
 
     # Billy insisting on doing a weird output for some reason
     print(f"# yeehaw {dest_node.cost} moves")
-    
-    # used for debug purposes
-    if PRINT_HEURISTICS:
-        board.print_board_heuristics()
 
 if __name__ == '__main__':
     main()

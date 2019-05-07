@@ -47,8 +47,7 @@ class HexBoard():
         self.tiles = {}
         self.currentstate = tuple()
         self.player = Colour.parse_colour(config["colour"])
-        self.currentstate = tuple(tuple(sorted(map(tuple, config["pieces"]))))
-
+        self.currentstate = tuple(sorted(map(tuple, config["pieces"])))
 
         # initialise all blank tiles
         for coord in self.iter_coords():
@@ -91,32 +90,21 @@ class HexBoard():
         Simply calls another function as different approaches were taken during development
         Final implementation used dijkstra. Older versions are commented out
         '''
-        # self.basic_heuristics()
+        self.set_basic_heuristics()
         # self.better_heuristics()
-        self.dijkstra_heuristics()
+        # self.dijkstra_heuristics()
 
-    def basic_heuristics(self):
-        '''
-        takes a hexboard and assigns a heuristic value to each tile (dependent on player)
-        heuristic assumes an empty board, and calculates the number of moves required to reach an end tile
-        where each move is associated with a cost of 0.5 (since jumps cover 2 tiles and cost 1), plus one to exit: 
-        Heu = (Dist/2)+1
-        '''
-        for coord in self.iter_coords():
-            if self[coord].colour != Colour.BLOCK:
-                self[coord].heu = self.goal_jump_dist(coord)+1
-
-    def better_heuristics(self):
+    def set_basic_heuristics(self):
         ''' 
         takes a hexboard and assigns a heuristic value to each tile (dependent on player)
-        heuristic assumes an empty board, and calculates the number of jumps required to reach an end tile
+        heuristic assumes an empty board, and calculates the number of jumps required to reach an end tile, plus one to exit
         essentially the cieling of the result of basic_heuristic
         '''
         for coord in self.iter_coords():
             if self[coord].colour != Colour.BLOCK:
                 self[coord].heu = (self.goal_dist(coord)+1)//2 + 1
 
-    def dijkstra_heuristics(self):
+    def set_dijkstra_heuristics(self):
         '''
         takes a hexboard and assigns a heuristic value to each tile (dependent on player)
         heuristic considers the block tiles on the board
@@ -155,15 +143,21 @@ class HexBoard():
         '''
         finds the minimum number of steps taken to reach a player's goal tile, assuming jumps on every possible turn
         '''
-        return self.goal_dist(coord)/2
+        return (self.goal_dist(coord)+1)//2
+
+    @staticmethod
+    def coord_dist(coord1, coord2):
+        x1,y1 = coord1
+        x2,y2 = coord2
+
+        return max(abs(x1-x2), abs(y1-y2), abs((-x1-y1) - (-x2-y2)))
 
     def goal_dist(self, coord):
         '''
         finds the distance from a given point to the player's goal tiles
         '''
-        return {Colour.RED:   self.radius - coord[0],
-                Colour.GREEN: self.radius - coord[1],
-                Colour.BLUE:  self.radius - -sum(coord)}[self.player]
+
+        return min(HexBoard.coord_dist(coord, exit_coord) for exit_coord in self.exit_coords)
 
     def is_goal_state(self, state):
         return len(state)==0
@@ -225,19 +219,22 @@ class HexBoard():
         and the would-be output for the move to that state
         '''
         for acting_piece in state:
-            for new_pos, action in self.movejumpchoices(acting_piece, state):
+            for new_pos, action_type in self.movejumpchoices(acting_piece, state):
 
                 # replace acting_piece with its new position
                 new_state = tuple(sorted(piece if piece!=acting_piece else new_pos for piece in state))
 
                 # write move action string
-                move_action = f"{action} from {acting_piece} to {new_pos}."
+                # move_action = f"{action} from {acting_piece} to {new_pos}."
 
-                yield (new_state, move_action)
+                action = (action_type, (acting_piece, new_pos))
+
+                yield (new_state, action)
 
             if self.is_exit_tile(acting_piece):
                 new_state = tuple(piece for piece in state if piece!=acting_piece)
-                exit_action = f"EXIT from {acting_piece}."
+                # exit_action = f"EXIT from {acting_piece}."
+                exit_action = ("EXIT", acting_piece)
                 yield (tuple(sorted(new_state)), exit_action)
 
 

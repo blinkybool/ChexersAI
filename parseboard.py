@@ -3,7 +3,7 @@ import json, sys, os
 Generates board configurations from a board text file
 '''
 
-DEFAULT_BOARD_FILENAME = "defaultboard.txt"
+DEFAULT_BOARD_TEXT_FILE = "defaultboard.txt"
 
 # Pick player - (use same letter for board design)
 PLAYER = 'red'
@@ -12,25 +12,48 @@ PLAYER = 'red'
 
 ##############################################################################
 
-boardcoords = \
-(           ( 0,-3),( 1,-3),( 2,-3),( 3,-3),
+boardcoords = (
+            ( 0,-3),( 1,-3),( 2,-3),( 3,-3),
         (-1,-2),( 0,-2),( 1,-2),( 2,-2),( 3,-2),
     (-2,-1),(-1,-1),( 0,-1),( 1,-1),( 2,-1),( 3,-1),
 (-3, 0),(-2, 0),(-1, 0),( 0, 0),( 1, 0),( 2, 0),( 3, 0),
     (-3, 1),(-2, 1),(-1, 1),( 0, 1),( 1, 1),( 2, 1),
         (-3, 2),(-2, 2),(-1, 2),( 0, 2),( 1, 2),
-            (-3, 3),(-2, 3),(-1, 3),( 0, 3)            )
+            (-3, 3),(-2, 3),(-1, 3),( 0, 3))
 
 PLAYER_TILES = "rgbRGB"
 BLOCK_TILES = "xX"
 EMPTY_TILE = '-'
 
-def parseboard(input_board_filename=DEFAULT_BOARD_FILENAME):
+def parseboardinput():
+
+    if len(sys.argv)==1:
+        # Get the default board config returned by parseboard
+        board_text_file = DEFAULT_BOARD_TEXT_FILE
+
+    elif len(sys.argv)==2:
+
+        try:
+            # determine if the input is a txt file or json file
+            board_file = sys.argv[1]
+            file_ext = os.path.splitext(board_file)[1]
+
+            if file_ext == ".json":
+                with open(board_file) as file_data:
+                    return json.load(file_data)
+            else:
+                board_text_file = board_file
+        except:
+            print("# bad input", file=sys.stderr)
+            exit()
+    else:
+        print("# too many arguments (expected up to 1)", file=sys.stderr)
+        exit()
     
     template = {'colour': PLAYER, 'pieces': [], 'blocks': []}
 
-    with open(input_board_filename) as board:
-        for tile, coord in zip(board.read().split(), boardcoords):
+    with open(board_text_file) as board_text:
+        for tile, coord in zip(board_text.read().split(), boardcoords):
             if tile in PLAYER_TILES:
                 template["pieces"].append(coord)
             elif tile in BLOCK_TILES:
@@ -39,16 +62,3 @@ def parseboard(input_board_filename=DEFAULT_BOARD_FILENAME):
                 print("bad parse", file=sys.stderr)
 
     return template
-
-if __name__ == "__main__":
-
-    if len(sys.argv)==1:
-        input_file = DEFAULT_BOARD_FILENAME
-    elif len(sys.argv)==2:
-        input_file = sys.argv[1]
-    else:
-        print("# bad input", file=sys.stderr)
-
-    # Dump the board config textfile into a json file
-    with open(input_file.split()[0]+".json", 'w') as fp:
-        json.dump(parseboard(input_file), fp)
