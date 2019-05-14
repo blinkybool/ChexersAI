@@ -53,6 +53,7 @@ def miniMax(state, player):
         elif nextVal[player] > maxVal[player]:
             maxState = nextState
             maxVal = nextVal
+    print(maxVal, nextState)
     if maxVal is None:
         return PASS
     return (maxVal, nextState)
