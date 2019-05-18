@@ -1,7 +1,7 @@
 from hexboard import HexBoard
 import random
 
-class Kanye:
+class randomJim:
     def __init__(self, colour):
         """
         This method is called once at the beginning of the game to initialise
@@ -31,7 +31,7 @@ class Kanye:
         if choices is None or len(choices)==0:
             return ("PASS", None)
         
-        action = max(choices, key=lambda sa: sa[0].get_relative_eval()[self.board.player])[1]
+        action = random.choice(choices)[1]
 
         return action
 
