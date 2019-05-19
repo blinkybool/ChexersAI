@@ -1,81 +1,55 @@
-from enum import Enum, unique
+# from enum import Enum, unique
 from heapy import Heap
-
-RADIUS = 3
-
-@unique
-class Colour(Enum):
-    '''Enum class representing the different types of occupants of a tile'''
-    BLANK = 0
-    BLOCK = 1
-    RED = 2
-    GREEN = 3
-    BLUE = 4
-
-    @classmethod
-    def parse_colour(cls, colour):
-        return {"red": cls.RED,
-                "green": cls.GREEN,
-                "blue": cls.BLUE}[colour.lower()]
-
-    def is_player_colour(self):
-        '''determines whether a tile is occupied by a player piece'''
-        return self.value > Colour.BLOCK.value
-
-    def __str__(self):
-        return {Colour.BLANK: " ",
-                Colour.BLOCK: "X",
-                Colour.RED:   "R",
-                Colour.GREEN: "G",
-                Colour.BLUE:  "B"}[self]
-
-class Tile():
-    ''' Represents the state and heuristic value of a tile''' 
-    def __init__(self, colour=Colour.BLANK, heu=None):
-        self.colour = colour
-        self.heu = heu
-
-    def __str__(self):
-        return self.colour.__str__()
+from coordinates import ALL_NEIGHBOURS
+from state import State
+from coordinates import *
+import itertools
+from copy import deepcopy
 
 
+# @unique
+# class Colour(Enum):
+#     '''Enum class representing the different types of occupants of a tile'''
+#     BLANK = 0
+#     BLOCK = 1
+#     RED = 2
+#     GREEN = 3
+#     BLUE = 4
+
+#     @classmethod
+#     def parse_colour(cls, colour):
+#         return {"red": cls.RED,
+#                 "green": cls.GREEN,
+#                 "blue": cls.BLUE}[colour.lower()]
+
+#     def is_player_colour(self):
+#         '''determines whether a tile is occupied by a player piece'''
+#         return self.value > Colour.BLOCK.value
+
+#     def __str__(self):
+#         return {Colour.BLANK: " ",
+#                 Colour.BLOCK: "X",
+#                 Colour.RED:   "R",
+#                 Colour.GREEN: "G",
+#                 Colour.BLUE:  "B"}[self]
+
+# class Tile():
+#     ''' Represents the state and heuristic value of a tile''' 
+#     def __init__(self, colour=Colour.BLANK, heu=None):
+#         self.colour = colour
+#         self.heu = heu
+
+#     def __str__(self):
+#         return self.colour.__str__()
 
 class HexBoard():
-    '''Represents a board configuration from the perspective of one player'''
-    def __init__(self, config, radius=RADIUS):
-        self.radius = radius
-        self.tiles = {}
-        self.currentstate = tuple()
-        self.player = Colour.parse_colour(config["colour"])
-        self.currentstate = tuple(sorted(map(tuple, config["pieces"])))
 
-        # initialise all blank tiles
-        for coord in self.iter_coords():
-            self[coord] = Tile()
+    def __init__(self, player=RED):
+        self.player = player
+        self.state = State()
 
-        # set all the block positions
-        for coord in config["blocks"]:
-            self[tuple(coord)].colour = Colour.BLOCK
-        
-        # determine tiles from which pieces can exit
-        self.exit_coords = tuple(filter(self.is_exit_tile, self.iter_coords()))
-
-        # determines the heuristic value of each tile when occupied
-        self.set_tile_heuristics()
-
-    def __getitem__(self, key):
-        return self.tiles.__getitem__(key)
-
-    def __setitem__(self, key, item):
-        return self.tiles.__setitem__(key, item)
-
-    def iter_coords(self):
-        '''returns a generator which enumerates every tile coordinate on the hexboard'''
-        ran = range(-self.radius, self.radius + 1)
-        return ((q, r) for q in ran for r in ran if -q-r in ran)
-
-    def is_valid_coord(self, coord):
-        return -RADIUS <= min(coord) and max(coord) <= RADIUS and abs(sum(coord)) <= RADIUS
+    def update(self, player, action):
+        self.state.apply_action(player, action)
 
     def state_heu(self, state=None):
         '''
@@ -83,6 +57,10 @@ class HexBoard():
         '''
         if state == None: state = self.currentstate
         return sum(self[coord].heu for coord in state)
+
+    def make_blank_heuristic_maps(self, player=None):
+        players = PLAYERS if player is None else (player,)
+        return {player: dict.fromkeys(set(COORDINATES).difference(set.union(*map(self.state.__getitem__, OPPONENTS[player])))) for player in PLAYERS}
 
     def set_tile_heuristics(self):
         '''
@@ -94,19 +72,33 @@ class HexBoard():
         # self.better_heuristics()
         # self.dijkstra_heuristics()
 
-    def set_basic_heuristics(self):
+    def calc_basic_heuristics(self):
         ''' 
-        takes a hexboard and assigns a heuristic value to each tile (dependent on player)
+        assigns a heuristic value to each tile
         heuristic assumes an empty board, and calculates the number of jumps required to reach an end tile, plus one to exit
         essentially the cieling of the result of basic_heuristic
         '''
-        for coord in self.iter_coords():
-            if self[coord].colour != Colour.BLOCK:
-                self[coord].heu = (self.goal_dist(coord)+1)//2 + 1
+        heu_maps = self.make_blank_heuristic_maps()
 
-    def set_dijkstra_heuristics(self):
+        for player in heu_maps:
+            for coord in heu_maps[player]:
+                self.heu_maps[player][coord] = self.goal_dist(coord)/2 + 1
+
+    def calc_better_heuristics(self, player):
+        ''' 
+        assigns a heuristic value to each tile
+        heuristic assumes an empty board, and calculates the number of jumps required to reach an end tile, plus one to exit
+        essentially the cieling of the result of basic_heuristic
         '''
-        takes a hexboard and assigns a heuristic value to each tile (dependent on player)
+        heu_maps = self.make_blank_heuristic_maps()
+        
+        for player in heu_maps:
+            for coord in heu_maps[player]:
+                self.heu_maps[player][coord] = (self.goal_dist(coord)+1)//2 + 1
+
+    def set_dijkstra_heuristics(self, player=None):
+        '''
+        assigns a heuristic value to each tile
         heuristic considers the block tiles on the board
         and calculates the minimum cost to get to each tile from an end tile
         by performing dijkstra (adding one for exit cost).
@@ -114,10 +106,11 @@ class HexBoard():
         empty tiles in order to remain admissible, since in practice, other player tiles may be present
         to facilitate jumps
         '''
-
+        
+        heu_maps = self.make_blank_heuristic_maps()
         queue = Heap()
         seen_coords = {}
-        for exit_coord in self.exit_coords:
+        for exit_coord in EXIT_COORDS[player]:
             # initial coord initialised with 1 to allow for exit cost
             queue.push((1, exit_coord))
             seen_coords[exit_coord] = 1
@@ -128,7 +121,7 @@ class HexBoard():
             self[min_coord].heu = min_cost
 
             # assume pieces can jump over empty squares
-            for next_coord, _ in self.movejumpchoices(min_coord, allowemptyjumps=True):
+            for next_coord, _ in self.move_jump_choices(min_coord, allowemptyjumps=True):
                 # push accessible coords to queue if not seen before
                 if next_coord in seen_coords:
                     old_cost = seen_coords[next_coord]
@@ -139,25 +132,11 @@ class HexBoard():
                     queue.push((min_cost+1, next_coord))
                     seen_coords[next_coord] = min_cost+1
 
-    def goal_jump_dist(self, coord):
+    def goal_jump_dist(self, coord, player):
         '''
         finds the minimum number of steps taken to reach a player's goal tile, assuming jumps on every possible turn
         '''
-        return (self.goal_dist(coord)+1)//2
-
-    @staticmethod
-    def coord_dist(coord1, coord2):
-        x1,y1 = coord1
-        x2,y2 = coord2
-
-        return max(abs(x1-x2), abs(y1-y2), abs((-x1-y1) - (-x2-y2)))
-
-    def goal_dist(self, coord):
-        '''
-        finds the distance from a given point to the player's goal tiles
-        '''
-
-        return min(HexBoard.coord_dist(coord, exit_coord) for exit_coord in self.exit_coords)
+        return (EXIT_DIST[player][coord]+1)//2
 
     def is_goal_state(self, state):
         return len(state)==0
@@ -171,73 +150,45 @@ class HexBoard():
         
         x, y = coord
 
-        return {Colour.RED: bool(x==RADIUS),
-                Colour.GREEN: bool(y == RADIUS),
-                Colour.BLUE: bool(sum(coord)==-RADIUS)}[self.player]
+        return {RED:     bool(x==RADIUS),
+                GREEN:   bool(y==RADIUS),
+                BLUE:    bool(-sum(coord)==RADIUS)}[self.player]
 
-    def occupied(self, coord, state=tuple()):
-        return coord in state or self[coord].colour == Colour.BLOCK
+    def occupied(self, coord):
+        return coord in self.state
+    
+    def move_jump_choices(self, coord, allowemptyjumps=False):
+        for movecoord, jumpcoord in ALL_NEIGHBOURS[coord]:
+            if self.occupied(movecoord):
+                if jumpcoord is not None and not self.occupied(jumpcoord):
+                    yield (jumpcoord, "JUMP")
+            else:
+                if allowemptyjumps and jumpcoord is not None and not self.occupied(jumpcoord):
+                    yield (jumpcoord, "JUMP")
+                yield (movecoord, "MOVE")
 
-    def movejumpchoices(self, piececoord, state=tuple(), allowemptyjumps=False):
-        '''
-        yields all possible coordinates that can be moved to from piececoord
-        and a string representation of the move type to reach it
-        allowemptyjumps is used when performing dijkstra for the heuristic.
-        '''
-        q,r = piececoord
-
-        # all directly coordinates directly adjacent to piececoord (presented visually)
-        movecoords = \
-               (( q ,r-1),(q+1,r-1),
-            (q-1, r )    ,    (q+1, r ),
-                (q-1,r+1),( q ,r+1))
-
-        # all coords within jumping distance
-        jumpcoords = \
-               (( q ,r-2),(q+2,r-2),
-            (q-2, r )    ,    (q+2, r ),
-                (q-2,r+2),( q ,r+2))
-
-        # determines which coordinates are accessible in each direction
-        for movecoord, jumpcoord in zip(movecoords, jumpcoords):
-            if self.is_valid_coord(movecoord):
-                # check if immediate neighbour is occupied
-                if self.occupied(movecoord,state):
-                    # if so, check if jumping is available
-                    if self.is_valid_coord(jumpcoord) and not self.occupied(jumpcoord,state):
-                        yield (jumpcoord,"JUMP")
-                else:
-                    # jumping might still be available if allowemptyjumps is True
-                    if allowemptyjumps and self.is_valid_coord(jumpcoord) and not self.occupied(jumpcoord):
-                        yield (jumpcoord, "JUMP")
-                    # immediate neighbour is empty, so a basic move is available
-                    yield (movecoord, "MOVE")
-
-    def adj_states(self, state):
+    def adj_states(self, player=None, state=None):
         '''
         takes a piece state, and yields 2-tuples containing one of the new possible PieceStates
         and the would-be output for the move to that state
         '''
-        for acting_piece in state:
-            for new_pos, action_type in self.movejumpchoices(acting_piece, state):
+        if state is None: state = self.state
+        if player is None: player = self.player
 
-                # replace acting_piece with its new position
-                new_state = tuple(sorted(piece if piece!=acting_piece else new_pos for piece in state))
-
-                # write move action string
-                # move_action = f"{action} from {acting_piece} to {new_pos}."
+        for acting_piece in self.state[player]:
+            for new_pos, action_type in self.move_jump_choices(acting_piece):
 
                 action = (action_type, (acting_piece, new_pos))
+                new_state = deepcopy(state)
+                new_state.apply_action(player, action)
 
                 yield (new_state, action)
 
-            if self.is_exit_tile(acting_piece):
-                new_state = tuple(piece for piece in state if piece!=acting_piece)
-                # exit_action = f"EXIT from {acting_piece}."
+            if acting_piece in EXIT_COORDS[player]:
                 exit_action = ("EXIT", acting_piece)
-                yield (tuple(sorted(new_state)), exit_action)
-
-
+                new_state = deepcopy(self.state)
+                new_state.apply_action(player, exit_action)
+                yield (new_state, exit_action)
 
     def format_board(self, state=None, debug=False, message='', heuristic_mode=False):
         """
@@ -287,3 +238,4 @@ class HexBoard():
 
     def print_board_heuristics(self):
         print(self.format_board(message="heuristics: ", heuristic_mode=True))
+

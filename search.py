@@ -18,11 +18,13 @@ Hello {markerName}, my name is Kanye's fingers, and I'm here to use my fingers t
 """
 
 import os, sys, json
-from hexboard import Tile, HexBoard
+from hexboard import HexBoard
 from node import Node
 from parseboard import parseboardinput
 from heapy import Heap
 from time import sleep
+
+import cProfile
 
 #------------------------------------------------------------------------------
 # Flags for different debugging modes
@@ -84,8 +86,8 @@ def A_star_search(board):
             max_cost = max(max_cost, min_node.cost)
             stats = f"min_queue size: {len(min_queue)}\
                         \n# nodes expanded: {nodes_expanded}\
-                        \n# max cost: {max_cost}\
-                        \n# cur cost:{min_node.cost:2}" + min_node.cost*"#"
+                        \n# max cost + heu: {max_cost}\
+                        \n# cost+heu: {min_node.cost:2}+{min_node.heu:2} = {min_node.cost+min_node.heu}\n# " + min_node.cost*'$' + min_node.heu*'~'
             print(board.format_board(message=stats,state=min_node.state))
             sleep(SLEEP_TIME)
         
@@ -138,5 +140,25 @@ def main():
     # Billy insisting on doing a weird output for some reason
     print(f"# yeehaw {dest_node.cost} moves")
 
+# def main2():
+#     # find a board configuration from input
+#     board_config = parseboardinput()
+
+#     # initialise board
+#     board = HexBoard(board_config)
+
+#     cProfile.run("A_star_search(board)",)
+
+    
+
 if __name__ == '__main__':
+    pr = cProfile.Profile()
+    pr.enable()
+
     main()
+
+    pr.disable()
+
+    pr.print_stats(sort='time')
+
+
