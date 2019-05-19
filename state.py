@@ -4,7 +4,7 @@ import csv
 import itertools
 from copy import deepcopy
 
-VERIFY_EVAL_ADJUST = True
+VERIFY_EVAL_ADJUST = False
 DEBUG = True
 
 class State():
