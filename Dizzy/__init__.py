@@ -1,0 +1,1 @@
+from Dizzy.player import Dizzy as Player

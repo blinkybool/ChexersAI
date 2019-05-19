@@ -13,7 +13,8 @@ class Kanye:
         program will play as (Red, Green or Blue). The value will be one of the 
         strings "red", "green", or "blue" correspondingly.
         """
-        self.board = HexBoard(player=colour)
+        self.board = HexBoard()
+        self.player = colour
 
 
     def action(self):
@@ -27,11 +28,10 @@ class Kanye:
         must be represented based on the above instructions for representing 
         actions.
         """
-        choices = list(self.board.adj_states())
-        if choices is None or len(choices)==0:
-            return ("PASS", None)
         
-        action = max(choices, key=lambda sa: sa[0].get_relative_eval()[self.board.player])[1]
+        action = max(self.board.adj_states(self.player, self.board.state),
+                        key=lambda state_action :
+                            state_action[0].get_relative_eval()[self.player])[1]
 
         return action
 

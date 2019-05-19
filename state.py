@@ -1,4 +1,5 @@
-from coordinates import *
+from game_details import *
+from weights import *
 import csv
 import itertools
 from copy import deepcopy
@@ -7,19 +8,7 @@ VERIFY_EVAL_ADJUST = True
 DEBUG = True
 
 class State():
-    NUM_PIECES = "NUM_PIECES"
-    NUM_EXITED = "NUM_EXITED"
-    NUM_CAN_EXIT = "NUM_CAN_EXIT"
-    NUM_DANGERED = "NUM_DANGERED"
-    NUM_THREATS = "NUM_THREATS"
-    TOTAL_DIST = "TOTAL_DIST"
-
-    WEIGHTS = { NUM_PIECES: 2,
-                NUM_EXITED: 4,
-                NUM_CAN_EXIT: 1,
-                NUM_DANGERED: 0,
-                NUM_THREATS: 1,
-                TOTAL_DIST: -3}
+    
 
     def __init__(self,  players_pieces=None, players_exited=None):
         if players_pieces is None:
@@ -38,9 +27,9 @@ class State():
         return any(item in pieces for pieces in self.players_pieces.values())
 
     def get_absolute_eval(self):
-        # self.players_stats = self.calc_players_stats()
-        val = {player: sum(weight * self.players_stats[player][stat_name] for stat_name, weight in State.WEIGHTS.items()) for player in PLAYERS}
-        return val
+        if self.is_terminal():
+            return {player: BEST_POSSIBLE_EVAL if self.is_winner(player) else WORST_POSSIBLE_EVAL for player in PLAYERS}
+        return {player: sum(weight * self.players_stats[player][stat_name] for stat_name, weight in WEIGHTS.items()) for player in PLAYERS}
 
     def get_relative_eval(self):
         evaluation = self.get_absolute_eval()
@@ -50,26 +39,31 @@ class State():
         return ((opponent, opponent_pieces) for opponent, opponent_pieces in self.players_pieces.items() if opponent!=player)
 
     def is_terminal(self):
-        return any(map(int(NUM_STARTING_PIECES).__le__, self.players_exited.values()))
+        return any(map(int(NUM_TO_WIN).__le__, self.players_exited.values()))
+
+    def is_winner(self, player):
+        return self.players_exited[player] >= NUM_TO_WIN
     
     def calc_players_stats(self):
-        players_stats = {player: {stat: int() for stat in State.WEIGHTS.keys()} for player in PLAYERS}
+        players_stats = {player: {stat: int() for stat in WEIGHTS.keys()} for player in PLAYERS}
 
         for player, pieces in self.players_pieces.items():
-            players_stats[player][State.NUM_PIECES] = len(self.players_pieces[player])
-            players_stats[player][State.NUM_EXITED] = self.players_exited[player]
-            players_stats[player][State.TOTAL_DIST] = sum(EXIT_DIST[player][piece] for piece in self.players_pieces[player])
+            players_stats[player][NUM_PIECES] = len(self.players_pieces[player])
+            players_stats[player][NUM_EXITED] = self.players_exited[player]
+            players_stats[player][TOTAL_DIST] = sum(EXIT_DIST[player][piece] for piece in self.players_pieces[player])
             for piece in pieces:
                 if piece in EXIT_COORDS[player]:
-                    players_stats[player][State.NUM_CAN_EXIT] += 1
+                    players_stats[player][NUM_CAN_EXIT] += 1
                 for move, jump, in ALL_NEIGHBOURS[piece]:
                     if jump is not None and jump not in self:
                         for opponent in OPPONENTS[player]:
                             if move in self.players_pieces[opponent]:
-                                players_stats[player][State.NUM_THREATS] += 1
-                                players_stats[opponent][State.NUM_DANGERED] += 1
+                                players_stats[player][NUM_THREATS] += 1
+                                players_stats[opponent][NUM_DANGERED] += 1
         
         return players_stats
+
+
                                 
     def apply_action(self, acting_player, action):
         action_type, details = action
@@ -110,9 +104,9 @@ class State():
             self.adjust_eval_piece_add(acting_player, to_coord)
         
         for player in PLAYERS:
-            self.players_stats[player][State.NUM_EXITED] = self.players_exited[player]
+            self.players_stats[player][NUM_EXITED] = self.players_exited[player]
 
-            self.players_stats[player][State.TOTAL_DIST] = sum(EXIT_DIST[player][piece] for piece in self.players_pieces[player])
+            self.players_stats[player][TOTAL_DIST] = sum(EXIT_DIST[player][piece] for piece in self.players_pieces[player])
         
         if VERIFY_EVAL_ADJUST:
             correct_stats = self.calc_players_stats()
@@ -131,10 +125,10 @@ class State():
 
         addORremoveFactor = (1 if addMode else -1)
 
-        self.players_stats[player][State.NUM_PIECES] += addORremoveFactor
+        self.players_stats[player][NUM_PIECES] += addORremoveFactor
 
         if coord in EXIT_COORDS[player]:
-            self.players_stats[player][State.NUM_CAN_EXIT] += addORremoveFactor
+            self.players_stats[player][NUM_CAN_EXIT] += addORremoveFactor
         
         for move, jump in ALL_NEIGHBOURS[coord]:
 
@@ -149,8 +143,8 @@ class State():
                     #       victim
                     for opponent in opponents:
                         if move in self.players_pieces[opponent]:
-                            self.players_stats[opponent][State.NUM_DANGERED] += addORremoveFactor
-                            self.players_stats[player][State.NUM_THREATS] += addORremoveFactor
+                            self.players_stats[opponent][NUM_DANGERED] += addORremoveFactor
+                            self.players_stats[player][NUM_THREATS] += addORremoveFactor
                             break
                 else:
                     # Add/Remove threats/dangers regarding jump-piece jumping over move-piece and landing on coord-spot
@@ -164,8 +158,8 @@ class State():
                         if move in victim_pieces:
                             for attacker, attacker_pieces in self.iter_opponents_pieces(victim):
                                 if jump in attacker_pieces:
-                                    self.players_stats[attacker][State.NUM_THREATS] -= addORremoveFactor
-                                    self.players_stats[victim][State.NUM_DANGERED] -= addORremoveFactor
+                                    self.players_stats[attacker][NUM_THREATS] -= addORremoveFactor
+                                    self.players_stats[victim][NUM_DANGERED] -= addORremoveFactor
                                     break
                             break
 
@@ -184,8 +178,8 @@ class State():
                     and  coord2 not in self)   \
                     or  (coord2 in self.players_pieces[opponent] \
                     and  coord1 not in self):
-                    self.players_stats[opponent][State.NUM_THREATS] += addORremoveFactor
-                    self.players_stats[player][State.NUM_DANGERED] += addORremoveFactor
+                    self.players_stats[opponent][NUM_THREATS] += addORremoveFactor
+                    self.players_stats[player][NUM_DANGERED] += addORremoveFactor
                     break
     
     def __repr__(self):

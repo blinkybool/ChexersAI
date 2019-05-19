@@ -1,0 +1,23 @@
+from game_details import *
+
+NUM_PIECES = "NUM_PIECES"
+NUM_EXITED = "NUM_EXITED"
+NUM_CAN_EXIT = "NUM_CAN_EXIT"
+NUM_THREATS = "NUM_THREATS"
+NUM_DANGERED = "NUM_DANGERED"
+TOTAL_DIST = "TOTAL_DIST"
+
+WEIGHTS = { NUM_PIECES: 2,
+            NUM_EXITED: 4,
+            NUM_CAN_EXIT: 1,
+            NUM_THREATS: 1,
+            NUM_DANGERED: -1,
+            TOTAL_DIST: -3}
+
+BEST_POSSIBLE_EVAL = len(COORDINATES) * WEIGHTS[NUM_PIECES] \
+                        + NUM_TO_WIN * WEIGHTS[NUM_EXITED]  \
+                        + NUM_STARTING_PIECES * WEIGHTS[NUM_CAN_EXIT]  \
+                        + len(COORDINATES) * WEIGHTS[NUM_THREATS]
+
+WORST_POSSIBLE_EVAL = len(COORDINATES) * WEIGHTS[NUM_DANGERED] \
+                        + sum(EXIT_DIST[RED].values()) * WEIGHTS[TOTAL_DIST]

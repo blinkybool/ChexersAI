@@ -4,6 +4,7 @@ GREEN = "green"
 BLUE = "blue"
 PLAYERS = (RED, GREEN, BLUE)
 OPPONENTS = {RED: (GREEN,BLUE), GREEN: (BLUE, RED), BLUE: (RED, GREEN)}
+NEXT_PLAYER = {RED: GREEN, GREEN: BLUE, BLUE: RED}
 NUM_PLAYERS = len(PLAYERS)
 
 def _coordinates():
@@ -61,7 +62,6 @@ START_COORDS = {RED:    set(coord for coord in COORDINATES if    coord[0] == -RA
                 GREEN:  set(coord for coord in COORDINATES if    coord[1] == -RADIUS),
                 BLUE:   set(coord for coord in COORDINATES if -sum(coord) == -RADIUS)}
 
-NUM_STARTING_PIECES = len(START_COORDS[PLAYERS[0]])
 
 EXIT_COORDS = {RED:     frozenset(coord for coord in COORDINATES if coord[0]==RADIUS),
                 GREEN:  frozenset(coord for coord in COORDINATES if coord[1]==RADIUS),
@@ -70,6 +70,12 @@ EXIT_COORDS = {RED:     frozenset(coord for coord in COORDINATES if coord[0]==RA
 EXIT_DIST = {player: 
                 {coord: min(coord_dist(coord, exit_coord) for exit_coord in EXIT_COORDS[player]) for coord in COORDINATES}
                     for player in PLAYERS}
+
+'''RULES'''
+NUM_TO_WIN = 4
+NUM_STARTING_PIECES = len(START_COORDS[RED])
+MAX_STATE_REPEATS = 4
+
 
 class PlayerDict(dict):
     _keys = PLAYERS
@@ -84,3 +90,5 @@ class PlayerDict(dict):
         if key not in PlayerDict._keys:
             raise KeyError
         return super().__setitem__(key, value)
+
+print(EXIT_DIST)
