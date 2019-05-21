@@ -53,7 +53,7 @@ class Node():
         generates nodes containing adjacent states which are 1 move away from self.state
         on the board
         '''
-        for adj_state, action in board.adj_states(self.state):
+        for adj_state, action in board.adj_state_actions(self.state):
             yield Node(
                     state=       adj_state,
                     cost=        self.cost+1,

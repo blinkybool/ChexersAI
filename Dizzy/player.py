@@ -1,6 +1,10 @@
 from hexboard import HexBoard
 import random
 from MiniMax import miniMax
+from weights import TOTAL_DIST
+from operator import itemgetter
+
+DEBUG = True
 
 class Dizzy:
     def __init__(self, colour):
@@ -30,6 +34,22 @@ class Dizzy:
         actions.
         """
         
+        if not set.union(*map(itemgetter(1), self.board.state.iter_opponents_pieces(self.player))):
+            # Dizzy is the only player left on the board
+            # don't waste any time finding a good move, just fuckin go
+            for state, action in self.board.adj_state_exit_actions(self.player):
+                return action
+            for state, action in self.board.adj_state_actions(self, player):
+                if state.players_stats[player][TOTAL_DIST] < self.board.state.players_stats[player][TOTAL_DIST]:
+                    return action
+            else:
+                if DEBUG:
+                    raise Exception
+
+            
+            
+
+
         action = miniMax(self.board, self.player)[1]
 
         return action

@@ -34,7 +34,19 @@ class HexBoard():
                     yield (jump, "JUMP")
                 yield (move, "MOVE")
 
-    def adj_states(self, player, state=None):
+    def adj_state_exit_actions(self, player, state=None):
+        if state is None:
+            state = self.state
+
+        for acting_piece in state[player]:
+
+            if acting_piece in EXIT_COORDS[player]:
+                exit_action = ("EXIT", acting_piece)
+                new_state = deepcopy(state)
+                new_state.apply_action(player, exit_action)
+                yield (new_state, exit_action)
+
+    def adj_state_actions(self, player, state=None):
         if state is None:
             state = self.state
 
@@ -56,7 +68,7 @@ class HexBoard():
                 yield (new_state, exit_action)
         
         if not can_move:
-            yield (self, ("PASS", None))
+            yield (state, ("PASS", None))
 
     def format_board(self, state=None, debug=False, message='', heuristic_mode=False):
         """

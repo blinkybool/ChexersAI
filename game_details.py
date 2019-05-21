@@ -45,6 +45,7 @@ def _opposing_neighbour_pairs(coord):
         elif is_valid_coord(coord2):
             yield (None, coord2)
 
+# valid according to redblobgames
 def coord_dist(coord1, coord2):
     x1,y1 = coord1
     x2,y2 = coord2
@@ -63,17 +64,17 @@ START_COORDS = {RED:    set(coord for coord in COORDINATES if    coord[0] == -RA
                 BLUE:   set(coord for coord in COORDINATES if -sum(coord) == -RADIUS)}
 
 
-EXIT_COORDS = {RED:     frozenset(coord for coord in COORDINATES if coord[0]==RADIUS),
-                GREEN:  frozenset(coord for coord in COORDINATES if coord[1]==RADIUS),
-                BLUE:   frozenset(coord for coord in COORDINATES if -sum(coord)==RADIUS)}
+EXIT_COORDS = {RED:     frozenset(coord for coord in COORDINATES if     coord[0] == RADIUS),
+                GREEN:  frozenset(coord for coord in COORDINATES if     coord[1] == RADIUS),
+                BLUE:   frozenset(coord for coord in COORDINATES if  -sum(coord) == RADIUS)}
 
 EXIT_DIST = {player: 
                 {coord: min(coord_dist(coord, exit_coord) for exit_coord in EXIT_COORDS[player]) for coord in COORDINATES}
                     for player in PLAYERS}
 
-'''RULES'''
+### RULES ###
 NUM_TO_WIN = 4
-NUM_STARTING_PIECES = len(START_COORDS[RED])
+NUM_STARTING_PIECES = 4
 MAX_STATE_REPEATS = 4
 
 
@@ -90,5 +91,3 @@ class PlayerDict(dict):
         if key not in PlayerDict._keys:
             raise KeyError
         return super().__setitem__(key, value)
-
-print(EXIT_DIST)

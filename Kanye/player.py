@@ -29,7 +29,7 @@ class Kanye:
         actions.
         """
         
-        action = max(self.board.adj_states(self.player, self.board.state),
+        action = max(self.board.adj_state_actions(self.player, self.board.state),
                         key=lambda state_action :
                             state_action[0].get_relative_eval()[self.player])[1]
 

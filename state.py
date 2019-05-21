@@ -4,21 +4,27 @@ import csv
 import itertools
 from copy import deepcopy
 
-VERIFY_EVAL_ADJUST = False
+VERIFY_EVAL_ADJUST = True
 DEBUG = True
 
 class State():
-    
+
+    def __hash__(self):
+        return self._hash
+
+    def set_hash(self):
+        self._hash = hash(tuple((self.players_exited[player], frozenset(self.players_pieces[player])) for player in PLAYERS))
 
     def __init__(self,  players_pieces=None, players_exited=None):
         if players_pieces is None:
             players_pieces = deepcopy(START_COORDS)
         if players_exited is None:
             players_exited = PlayerDict(int)
-        
+
         self.players_pieces = players_pieces
         self.players_exited = players_exited
         self.players_stats = self.calc_players_stats()
+        self.set_hash()
 
     def __getitem__(self, key):
         return self.players_pieces.__getitem__(key)
@@ -26,14 +32,65 @@ class State():
     def __contains__(self, item):
         return any(item in pieces for pieces in self.players_pieces.values())
 
-    def get_absolute_eval(self):
-        if self.is_terminal():
-            return {player: BEST_POSSIBLE_EVAL if self.is_winner(player) else WORST_POSSIBLE_EVAL for player in PLAYERS}
-        return {player: sum(weight * self.players_stats[player][stat_name] for stat_name, weight in WEIGHTS.items()) for player in PLAYERS}
+    def __eq__(self, other):
+        if type(self) == type(other):
+            for player in PLAYERS:
+                if self.players_exited[player] != other.players_exited[player]:
+                    return False
+                if self.players_pieces[player] != other.players_pieces[player]:
+                    return False
+            return True
+        return False
+
+
+    def getStrategies(self):
+        playerStratWeights = {}
+        for player in PLAYERS:
+            if len(self.players_pieces[player]) + self.players_exited[player] < NUM_TO_WIN:
+                if len(self.players_pieces[player]) == 1:
+                    playerStratWeights[player] = LAST_AND_NEED_MORE
+                else:
+                    playerStratWeights[player] = NEED_MORE
+
+            elif len(self.players_pieces[player]) + self.players_exited[player] > NUM_TO_WIN:
+                if len(self.players_pieces[player]) + self.players_exited[player] >= NUM_TO_WIN + 3:
+                    playerStratWeights[player] = HAVE_LOTS_EXTRA
+
+                if len(self.players_pieces[player]) + self.players_exited[player] >= NUM_TO_WIN + 2:
+                    playerStratWeights[player] = HAVE_SOME_EXTRA
+                else:
+                    playerStratWeights[player] = HAVE_1_EXTRA
+            
+            else:
+                playerStratWeights[player] = STANDARD
+        return playerStratWeights
+                    
+
+
+    def get_raw_eval(self, playerStrats = None):
+        raw_dict = PlayerDict(float)
+        modeWeights={}
+        if playerStrats is None:
+            playerStrats = self.getStrategies()
+
+
+        for player in PLAYERS:
+            playerStratWeights = STRATEGIES[playerStrats[player]]
+            for stat_name in WEIGHTS:
+                modeWeights[stat_name] = WEIGHTS[stat_name] * playerStratWeights[stat_name]
+            raw_dict[player] = WEIGHTS[NUM_PIECES] * len(self.players_pieces[player])
+            raw_dict[player] += WEIGHTS[NUM_EXITED] * self.players_exited[player]
+            for stat_name, stat in self.players_stats[player].items():
+                if stat_name == TOTAL_DIST:
+                    raw_dict[player] += (WEIGHTS[stat_name]*stat)/len(self.players_pieces[player])
+                raw_dict[player] += WEIGHTS[stat_name]*stat
+            
+        return raw_dict
+        # return {player: sum(weight * self.players_stats[player][stat_name] for stat_name, weight in WEIGHTS.items()) for player in PLAYERS}
 
     def get_relative_eval(self):
-        evaluation = self.get_absolute_eval()
-        return {player: player_eval - sum(evaluation[opponent] for opponent in OPPONENTS[player])/2 for player, player_eval in evaluation.items()}
+        evaluation = self.get_raw_eval()
+        return {player: (self.utility, player_eval - sum(evaluation[opponent] for opponent in OPPONENTS[player])/2) for player, player_eval in evaluation.items()}
 
     def iter_opponents_pieces(self, player):
         return ((opponent, opponent_pieces) for opponent, opponent_pieces in self.players_pieces.items() if opponent!=player)
@@ -43,70 +100,75 @@ class State():
 
     def is_winner(self, player):
         return self.players_exited[player] >= NUM_TO_WIN
+
+    def utility(self, player):
+        if self.is_terminal():
+            return 1 if self.is_winner(player) else -1
+        return 0
     
     def calc_players_stats(self):
-        players_stats = {player: {stat: int() for stat in WEIGHTS.keys()} for player in PLAYERS}
+        players_stats = {player: {stat_name: int() for stat_name in (TOTAL_DIST,
+                                                                        NUM_CAN_EXIT,
+                                                                        NUM_THREATS,
+                                                                        NUM_DANGERED,
+                                                                        NUM_PROTECTS)} for player in PLAYERS}
 
         for player, pieces in self.players_pieces.items():
-            players_stats[player][NUM_PIECES] = len(self.players_pieces[player])
-            players_stats[player][NUM_EXITED] = self.players_exited[player]
             players_stats[player][TOTAL_DIST] = sum(EXIT_DIST[player][piece] for piece in self.players_pieces[player])
             for piece in pieces:
                 if piece in EXIT_COORDS[player]:
                     players_stats[player][NUM_CAN_EXIT] += 1
-                for move, jump, in ALL_NEIGHBOURS[piece]:
+                for move, jump in ALL_NEIGHBOURS[piece]:
                     if jump is not None and jump not in self:
-                        for opponent in OPPONENTS[player]:
-                            if move in self.players_pieces[opponent]:
+                        for opponent, opponents_pieces in self.iter_opponents_pieces(player):
+                            if move in opponents_pieces:
                                 players_stats[player][NUM_THREATS] += 1
                                 players_stats[opponent][NUM_DANGERED] += 1
+                                break
+                    if move in self.players_pieces[player]:
+                        players_stats[player][NUM_PROTECTS] += 1
         
         return players_stats
 
-
-                                
     def apply_action(self, acting_player, action):
         action_type, details = action
 
         if action_type == "EXIT":
             exit_coord = details
-            self.players_pieces[acting_player].discard(exit_coord)
+            self.players_pieces[acting_player].remove(exit_coord)
             self.players_exited[acting_player] += 1
 
-            self.adjust_eval_piece_remove(acting_player, exit_coord)
+            self.adjust_eval_remove_piece(acting_player, exit_coord)
 
         elif action_type == "MOVE":
             from_coord, to_coord = details
-            self.players_pieces[acting_player].discard(from_coord)
-            self.adjust_eval_piece_remove(acting_player, from_coord)
+            self.players_pieces[acting_player].remove(from_coord)
+            self.adjust_eval_remove_piece(acting_player, from_coord)
 
             self.players_pieces[acting_player].add(to_coord)
-            self.adjust_eval_piece_add(acting_player, to_coord)
+            self.adjust_stats_add_piece(acting_player, to_coord)
 
 
         elif action_type == "JUMP":
             from_coord, to_coord = details
             between_coord = coord_between(from_coord, to_coord)
 
-            self.players_pieces[acting_player].discard(from_coord)
-            self.adjust_eval_piece_remove(acting_player, from_coord)
+            self.players_pieces[acting_player].remove(from_coord)
+            self.adjust_eval_remove_piece(acting_player, from_coord)
 
             for opponent in OPPONENTS[acting_player]:
                 if between_coord in self.players_pieces[opponent]:
-                    self.players_pieces[opponent].discard(between_coord)
-                    self.adjust_eval_piece_remove(opponent, between_coord)
+                    self.players_pieces[opponent].remove(between_coord)
+                    self.adjust_eval_remove_piece(opponent, between_coord)
 
                     self.players_pieces[acting_player].add(between_coord)
-                    self.adjust_eval_piece_add(acting_player, between_coord)
+                    self.adjust_stats_add_piece(acting_player, between_coord)
                     break
 
             self.players_pieces[acting_player].add(to_coord)
-            self.adjust_eval_piece_add(acting_player, to_coord)
+            self.adjust_stats_add_piece(acting_player, to_coord)
         
-        for player in PLAYERS:
-            self.players_stats[player][NUM_EXITED] = self.players_exited[player]
-
-            self.players_stats[player][TOTAL_DIST] = sum(EXIT_DIST[player][piece] for piece in self.players_pieces[player])
+        self.set_hash()
         
         if VERIFY_EVAL_ADJUST:
             correct_stats = self.calc_players_stats()
@@ -114,23 +176,26 @@ class State():
                 for stat_name, stat_val in self.players_stats[player].items():
                     assert(stat_val == correct_stats[player][stat_name])
     
-    def adjust_eval_piece_add(self, player, coord):
-        return self.adjust_eval_piece_add_OR_remove(player, coord, addMode=True)
+    def adjust_stats_add_piece(self, player, coord):
+        return self.adjust_eval_add_OR_remove_piece(player, coord, addMode=True)
 
-    def adjust_eval_piece_remove(self, player, coord):
-        return self.adjust_eval_piece_add_OR_remove(player, coord, addMode=False)
+    def adjust_eval_remove_piece(self, player, coord):
+        return self.adjust_eval_add_OR_remove_piece(player, coord, addMode=False)
 
-    def adjust_eval_piece_add_OR_remove(self, player, coord, addMode):
+    def adjust_eval_add_OR_remove_piece(self, player, coord, addMode):
         opponents = OPPONENTS[player]
 
         addORremoveFactor = (1 if addMode else -1)
 
-        self.players_stats[player][NUM_PIECES] += addORremoveFactor
+        self.players_stats[player][TOTAL_DIST] += addORremoveFactor * EXIT_DIST[player][coord]
 
         if coord in EXIT_COORDS[player]:
             self.players_stats[player][NUM_CAN_EXIT] += addORremoveFactor
         
         for move, jump in ALL_NEIGHBOURS[coord]:
+
+            if move in self.players_pieces[player]:
+                self.players_stats[player][NUM_PROTECTS] += 2 * addORremoveFactor
 
             if jump is not None:
                 if jump not in self:

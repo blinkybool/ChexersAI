@@ -13,7 +13,8 @@ class randomJim:
         program will play as (Red, Green or Blue). The value will be one of the 
         strings "red", "green", or "blue" correspondingly.
         """
-        self.board = HexBoard(player=colour)
+        self.board = HexBoard()
+        self.player = colour
 
 
     def action(self):
@@ -27,10 +28,7 @@ class randomJim:
         must be represented based on the above instructions for representing 
         actions.
         """
-        choices = list(self.board.adj_states())
-        if choices is None or len(choices)==0:
-            return ("PASS", None)
-        
+        choices = list(self.board.adj_state_actions(self.player))
         action = random.choice(choices)[1]
 
         return action
