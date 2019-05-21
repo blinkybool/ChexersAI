@@ -16,13 +16,13 @@ HAVE_1_EXTRA = "HAVE_1_EXTRA"
 HAVE_SOME_EXTRA = "HAVE_SOME_EXTRA"
 HAVE_LOTS_EXTRA = "HAVE_LOTS_EXTRA"
 
-WEIGHTS = { NUM_PIECES: 4,
-            NUM_EXITED: 5.5,
-            NUM_CAN_EXIT: 1,
-            NUM_THREATS: 0.1,
-            NUM_DANGERED: -0.1,
-            TOTAL_DIST: -1,
-            NUM_PROTECTS: 0.05}
+WEIGHTS = { NUM_PIECES: 3,
+            NUM_EXITED: 4.2,
+            NUM_CAN_EXIT: 0.3,
+            NUM_THREATS: 0.5,
+            NUM_DANGERED: -0.5,
+            TOTAL_DIST: -0.5,
+            NUM_PROTECTS: 0.075}
 
 
 ##### mode multipliers #####
@@ -44,19 +44,19 @@ EXITING: { NUM_PIECES: 1,
             TOTAL_DIST: 1.2,
             NUM_PROTECTS: 0},
 
-NEED_MORE: { NUM_PIECES: 3,
-              NUM_EXITED: 0,
-              NUM_CAN_EXIT: 0,
+NEED_MORE: { NUM_PIECES: 2,
+              NUM_EXITED: 0.5,
+              NUM_CAN_EXIT: 0.5,
               NUM_THREATS: 1,
-              NUM_DANGERED: 2,
+              NUM_DANGERED: 1,
               TOTAL_DIST: 0.5,
               NUM_PROTECTS: 1},
 
-LAST_AND_NEED_MORE: { NUM_PIECES: 4,
+LAST_AND_NEED_MORE: { NUM_PIECES: 2,
                        NUM_EXITED: 0,
                        NUM_CAN_EXIT: 0,
                        NUM_THREATS: 2,
-                       NUM_DANGERED: 10,
+                       NUM_DANGERED: 2,
                        TOTAL_DIST: 0.05,
                        NUM_PROTECTS: 1},
 
@@ -81,7 +81,7 @@ HAVE_LOTS_EXTRA: { NUM_PIECES: 0.7,
                     NUM_CAN_EXIT: 1.3,
                     NUM_THREATS: 0.7,
                     NUM_DANGERED: 0.7,
-                    TOTAL_DIST: 1.5,
+                    TOTAL_DIST: 1.3,
                     NUM_PROTECTS: 1}
 
 }

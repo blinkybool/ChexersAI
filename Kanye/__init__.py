@@ -1,1 +1,0 @@
-from Kanye.player import Kanye as Player

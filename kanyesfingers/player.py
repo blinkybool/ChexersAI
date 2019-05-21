@@ -1,5 +1,6 @@
 from hexboard import HexBoard
-import random
+from operator import itemgetter
+from weights import *
 
 class Kanye:
     def __init__(self, colour):
@@ -28,6 +29,15 @@ class Kanye:
         must be represented based on the above instructions for representing 
         actions.
         """
+
+        if not set.union(*map(itemgetter(1), self.board.state.iter_opponents_pieces(self.player))):
+            # Kanye is the only player left on the board
+            # don't waste any time finding a good move, just fuckin go
+            for state, action in self.board.adj_state_exit_actions(self.player):
+                return action
+            for state, action in self.board.adj_state_actions(self.player):
+                if state.players_stats[self.player][TOTAL_DIST] < self.board.state.players_stats[self.player][TOTAL_DIST]:
+                    return action
         
         action = max(self.board.adj_state_actions(self.player, self.board.state),
                         key=lambda state_action :

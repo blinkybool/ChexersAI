@@ -72,7 +72,10 @@ EXIT_DIST = {player:
                 {coord: min(coord_dist(coord, exit_coord) for exit_coord in EXIT_COORDS[player]) for coord in COORDINATES}
                     for player in PLAYERS}
 
+
+
 ### RULES ###
+FIRST_PLAYER = RED
 NUM_TO_WIN = 4
 NUM_STARTING_PIECES = 4
 MAX_STATE_REPEATS = 4

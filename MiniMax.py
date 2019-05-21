@@ -1,47 +1,35 @@
 from hexboard import HexBoard
-from node import Node
-from random import randint
 from game_details import *
 from operator import itemgetter
 from state import State
 
-memoized_states = {}
+CUTOFF = 2
 
-CUTOFF = 1
-MIN_DEPTH_AWAY = 2
 
-def maxPlayer(board, state, depth, player, root_strategies):
-
-    if (state, root_strategies) in memoized_states:
-        eventual_state, depth_away = memoized_states[state, root_strategies]
-
-        if depth + depth_away >= CUTOFF:
-            return eventual_state
-
+def maxPlayer(board, state, depth, player):
+    '''
+    Returns the maximal evaluation state for the expected reachable states up to a cutoff
+    '''
 
     if depth >= CUTOFF or state.is_terminal():
         return state
 
-    eventual_state = max(map(itemgetter(0), board.adj_state_actions(player, state=state)),
-                            key=lambda next_state: maxPlayer(board,next_state,depth+1,NEXT_PLAYER[player],root_strategies).get_relative_eval()[player])
-    
-    depth_away = CUTOFF - depth
-    if depth_away >= MIN_DEPTH_AWAY:
-        memoized_states[state, root_strategies] = (eventual_state, depth_away)
+
+    return max(map(itemgetter(0), board.adj_state_actions(player, state=state)),
+                    key=lambda next_state: maxPlayer(board,
+                                                        next_state,
+                                                        depth+1,
+                                                        NEXT_PLAYER[player]).get_relative_eval()[player])
+
 
 def miniMax(board, player):
-    strategies = board.state.getStrategies()
-
-    ordered_strategies = tuple(strategies[player] for player in PLAYERS)
-
-    best_state,\
-    best_action = max(board.adj_state_actions(player, board.state),
+    '''
+    Returns the action which maximises the expected state evaluation after CUTOFF many moves
+    '''
+    return max(board.adj_state_actions(player, board.state),
                         key=lambda nextstate_action: 
                             maxPlayer(board,
                                         state=nextstate_action[0],
-                                        depth=0,
-                                        player=NEXT_PLAYER[player],
-                                        root_strategies=ordered_strategies).get_relative_eval()[player])
-    return (best_state, best_action)
-
+                                        depth=1,
+                                        player=NEXT_PLAYER[player]).get_relative_eval()[player])[1]
 

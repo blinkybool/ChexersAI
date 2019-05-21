@@ -1,0 +1,1 @@
+from kanyesfingers.player import Kanye as Player

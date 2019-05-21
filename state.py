@@ -4,27 +4,37 @@ import csv
 import itertools
 from copy import deepcopy
 
-VERIFY_EVAL_ADJUST = True
-DEBUG = True
+VERIFY_EVAL_ADJUST = False
+DEBUG = False
 
 class State():
-
+    '''
+    Represents the current state of the board
+    players_pieces: maps players to sets of their pieces
+    players_exited: maps players to their number of exited pieces
+    turn: the player whose current turn it is
+    '''
     def __hash__(self):
         return self._hash
 
     def set_hash(self):
         self._hash = hash(tuple((self.players_exited[player], frozenset(self.players_pieces[player])) for player in PLAYERS))
 
-    def __init__(self,  players_pieces=None, players_exited=None):
+    def __init__(self,  players_pieces=None, players_exited=None, turn=None):
+
+        # Set default values
         if players_pieces is None:
             players_pieces = deepcopy(START_COORDS)
         if players_exited is None:
             players_exited = PlayerDict(int)
+        if turn is None:
+            turn = NEXT_PLAYER[FIRST_PLAYER]
 
         self.players_pieces = players_pieces
         self.players_exited = players_exited
         self.players_stats = self.calc_players_stats()
         self.set_hash()
+        self.turn = turn
 
     def __getitem__(self, key):
         return self.players_pieces.__getitem__(key)
@@ -42,7 +52,7 @@ class State():
             return True
         return False
 
-
+    # get the best strategies for each player to use
     def getStrategies(self):
         playerStratWeights = {}
         for player in PLAYERS:
@@ -66,7 +76,8 @@ class State():
         return playerStratWeights
                     
 
-
+    # calculate weighted sum of state features
+    # this is essentially the evaluation function
     def get_raw_eval(self, playerStrats = None):
         raw_dict = PlayerDict(float)
         modeWeights={}
@@ -78,20 +89,43 @@ class State():
             playerStratWeights = STRATEGIES[playerStrats[player]]
             for stat_name in WEIGHTS:
                 modeWeights[stat_name] = WEIGHTS[stat_name] * playerStratWeights[stat_name]
-            raw_dict[player] = WEIGHTS[NUM_PIECES] * len(self.players_pieces[player])
-            raw_dict[player] += WEIGHTS[NUM_EXITED] * self.players_exited[player]
+            raw_dict[player] = modeWeights[NUM_PIECES] * len(self.players_pieces[player])
+            raw_dict[player] += modeWeights[NUM_EXITED] * self.players_exited[player]
             for stat_name, stat in self.players_stats[player].items():
-                if stat_name == TOTAL_DIST:
-                    raw_dict[player] += (WEIGHTS[stat_name]*stat)/len(self.players_pieces[player])
-                raw_dict[player] += WEIGHTS[stat_name]*stat
+
+                # Reweight being in danger according to whose turn it is
+                if stat_name == NUM_DANGERED:
+                    if self.turn == player:
+                        raw_dict[player] += (modeWeights[stat_name]*stat)/2
+                    else:
+                        raw_dict[player] += (modeWeights[stat_name]*stat)*2
+                elif stat_name == NUM_THREATS:
+                    if self.turn == player:
+                        raw_dict[player] += (modeWeights[stat_name]*stat)*2
+                    else:
+                        raw_dict[player] += (modeWeights[stat_name]*stat)/2
+
+                # convert distance into average distance
+                elif stat_name == TOTAL_DIST and len(self.players_pieces[player]):
+                    raw_dict[player] += (modeWeights[stat_name]*stat)/len(self.players_pieces[player])
+                else:
+                    raw_dict[player] += modeWeights[stat_name]*stat
             
         return raw_dict
-        # return {player: sum(weight * self.players_stats[player][stat_name] for stat_name, weight in WEIGHTS.items()) for player in PLAYERS}
 
+    # Prioritise details of the terminal states, then normalize the raw evaluations of each player to each other
     def get_relative_eval(self):
         evaluation = self.get_raw_eval()
-        return {player: (self.utility, player_eval - sum(evaluation[opponent] for opponent in OPPONENTS[player])/2) for player, player_eval in evaluation.items()}
+        #return {player: (self.utility(player), player_eval) for player, player_eval in evaluation.items()}
+        relative_eval = {}
+        for player, player_eval in evaluation.items():
+            opponent_raw = 0
+            opponent_raw += 0.45 * evaluation[min(OPPONENTS[player], key=evaluation.__getitem__)] + 0.55 * evaluation[max(OPPONENTS[player], key=evaluation.__getitem__)]
+            relative_eval[player] = (self.utility(player), player_eval - opponent_raw)
+        return relative_eval
 
+
+    # Slices players pieces dictionary to be just the opponents
     def iter_opponents_pieces(self, player):
         return ((opponent, opponent_pieces) for opponent, opponent_pieces in self.players_pieces.items() if opponent!=player)
 
@@ -105,6 +139,7 @@ class State():
         if self.is_terminal():
             return 1 if self.is_winner(player) else -1
         return 0
+
     
     def calc_players_stats(self):
         players_stats = {player: {stat_name: int() for stat_name in (TOTAL_DIST,
@@ -168,6 +203,7 @@ class State():
             self.players_pieces[acting_player].add(to_coord)
             self.adjust_stats_add_piece(acting_player, to_coord)
         
+        self.turn = NEXT_PLAYER[acting_player]
         self.set_hash()
         
         if VERIFY_EVAL_ADJUST:

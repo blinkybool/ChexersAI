@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "module": "referee",
-            "args": ["-D", "-d 0.5", "Dizzy", "Kanye", "randomJim"]
+            "args": ["-D", "-d 0.5", "Dizzy", "Kanye", "Kanye"]
         },
         {
             "name": "Python: Current File",
