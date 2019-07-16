@@ -85,14 +85,3 @@ HAVE_LOTS_EXTRA: { NUM_PIECES: 0.7,
                     NUM_PROTECTS: 1}
 
 }
-
-
-'''
-BEST_POSSIBLE_EVAL: len(COORDINATES) * WEIGHTS[NUM_PIECES] \
-                        + NUM_TO_WIN * WEIGHTS[NUM_EXITED]  \
-                        + NUM_STARTING_PIECES * WEIGHTS[NUM_CAN_EXIT]  \
-                        + len(COORDINATES) * WEIGHTS[NUM_THREATS]
-
-WORST_POSSIBLE_EVAL = len(COORDINATES) * WEIGHTS[NUM_DANGERED] \
-                        + sum(EXIT_DIST[RED].values()) * WEIGHTS[TOTAL_DIST]
-'''
