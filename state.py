@@ -74,7 +74,7 @@ class State():
             else:
                 playerStratWeights[player] = STANDARD
         return playerStratWeights
-                    
+
 
     # calculate weighted sum of state features
     # this is essentially the evaluation function
